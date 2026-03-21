@@ -18,10 +18,18 @@
       padding: 80px 40px;
     }
 
+    /* center block */
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
     h1 {
-      font-size: 1.5rem;
+      font-size: 2.2rem; /* larger */
       font-weight: 300;
-      margin-bottom: 40px;
+      margin-bottom: 50px;
+      text-align: center; /* centered */
+      letter-spacing: 0.08em;
     }
 
     .event {
@@ -29,18 +37,18 @@
     }
 
     .event-title {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
+      font-size: 1.2rem;
+      margin-bottom: 12px;
       opacity: 0.8;
     }
 
     .writeup-list a {
       display: block;
-      margin: 4px 0;
+      margin: 6px 0;
       text-decoration: none;
       color: #fff;
       opacity: 0.6;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
 
     .writeup-list a:hover {
@@ -51,20 +59,25 @@
 
 <body>
 
-  <h1>CTF Writeups</h1>
+  <div class="container">
 
-  <!-- Event 1 -->
-  <div class="event">
-    <div class="event-title">Undutmaning-2026</div>
-    <div class="writeup-list">
-      <a href="/docs/writeups/crashdump-writeup.html">Crashdump</a>
-      <a href="/docs/writeups/Flytvåst.html">Flytvåst</a>
-      <a href="/docs/writeups/GIFF_splitter_writeup.html">GIFF Splitter</a>
-      <a href="/docs/writeups/skattkistan.html">Skattkistan</a>
-      <a href="/docs/writeups/Vågor under vattnet.html">Vågor under vattnet</a>
+    <h1>CTF Writeups</h1>
+
+    <div class="event">
+      <div class="event-title">Undutmaning-2026</div>
+
+      <div class="writeup-list">
+        <a href="/docs/writeups/crashdump-writeup.html">Crashdump</a>
+        <a href="/docs/writeups/flytvast.html">Flytvåst</a>
+        <a href="/docs/writeups/giff-splitter_writeup.html">GIFF Splitter</a>
+        <a href="/docs/writeups/skattkistan.html">Skattkistan</a>
+        <a href="/docs/writeups/vagor-undervattnet.html">Vågor under vattnet</a>
+        <a href="/docs/writeups/pa-botten.html">På botten</a>
+      </div>
+
     </div>
+
   </div>
 
-  
 </body>
 </html>
