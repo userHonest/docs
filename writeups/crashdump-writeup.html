@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ett till pajat fönster - Writeup</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #f7fbfd;
+      --text: #16202a;
+      --muted: #557080;
+      --line: #d7e5eb;
+      --accent: #149eca;
+      --accent-soft: #e8f8fd;
+      --code-bg: #f4fafc;
+      --code-line: #cfe2ea;
+      --code: #0f1720;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    .hero {
+      padding: 36px;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at top right, rgba(20, 158, 202, 0.14), transparent 35%),
+        linear-gradient(180deg, #fbfeff 0%, #f7fbfd 100%);
+      border-radius: 24px;
+      margin-bottom: 28px;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 0 0 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid #b9e8f4;
+      background: var(--accent-soft);
+      color: #0a607a;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    h1, h2, h3 {
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 14px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      margin-top: 42px;
+    }
+
+    h3 {
+      font-size: 1.08rem;
+      margin-top: 26px;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .lead {
+      font-size: 1.06rem;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .flag {
+      margin-top: 22px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: var(--accent-soft);
+      border: 1px solid #b9e8f4;
+      font-size: 1.1rem;
+    }
+
+    .flag code {
+      font-size: 1.05em;
+      font-weight: 700;
+      color: #0a607a;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 18px;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 500ms ease, transform 500ms ease, box-shadow 220ms ease;
+    }
+
+    .card.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card:hover {
+      box-shadow: 0 14px 34px rgba(21, 79, 102, 0.08);
+    }
+
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0;
+    }
+
+    .steps li {
+      counter-increment: step;
+      margin: 0 0 18px;
+      padding: 16px 16px 16px 56px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      position: relative;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--code);
+    }
+
+    code {
+      background: #eef4f7;
+      padding: 0.12rem 0.34rem;
+      border-radius: 8px;
+    }
+
+    pre {
+      margin: 14px 0;
+      padding: 16px;
+      overflow-x: auto;
+      background:
+        linear-gradient(180deg, #fbfeff 0%, var(--code-bg) 100%);
+      color: #183240;
+      border-radius: 16px;
+      border: 1px solid var(--code-line);
+      line-height: 1.5;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+      position: relative;
+    }
+
+    pre::before {
+      content: "";
+      display: block;
+      width: 54px;
+      height: 10px;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 5px 5px, #ff8f8f 0 4px, transparent 4.5px),
+        radial-gradient(circle at 27px 5px, #ffd27a 0 4px, transparent 4.5px),
+        radial-gradient(circle at 49px 5px, #8fdaa0 0 4px, transparent 4.5px);
+    }
+
+    ul {
+      margin: 10px 0 14px 20px;
+    }
+
+    .note {
+      padding: 14px 16px;
+      background: #fff;
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      color: var(--muted);
+    }
+
+    .split {
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero-glow {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-glow::after {
+      content: "";
+      position: absolute;
+      inset: auto -10% -35% auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(20, 158, 202, 0.18) 0%, rgba(20, 158, 202, 0) 72%);
+      pointer-events: none;
+    }
+
+    @media (min-width: 860px) {
+      .split {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero hero-glow">
+      <p style="margin:0 0 10px;color:var(--accent);font-weight:700;">Crash Dump Analysis</p>
+      <div class="meta-row">
+        <span class="pill">Category: Reversing</span>
+      </div>
+      <h1>Ett till pajat fönster</h1>
+      <p class="lead">
+        This challenge is about reversing a Windows kernel crash dump instead of a normal binary.
+        The goal is not just to scrape strings, but to understand why the machine crashed, what the
+        custom driver was doing right before the bugcheck, and where the real flag survived in the
+        saved execution state.
+      </p>
+      <div class="flag">
+        Final flag: <code>undut{w0w_7h15_w45_4nn0y1n6}</code>
+      </div>
+    </section>
+
+    <section>
+      <h2>What The Challenge Is About</h2>
+      <div class="card">
+        <p>
+          <code>Ett till pajat fönster</code> gives us a small Windows crash dump and expects us to
+          recover the flag from the wreckage. The interesting part is that the challenge is built
+          around a fake-looking trail of readable strings and a real solution hidden in the crash-time
+          CPU context.
+        </p>
+        <p>
+          In practice, that means the task sits between <code>forensics</code> and
+          <code>reversing</code>: we inspect dump metadata, recover driver-related strings, identify
+          the custom code path, and then reason about the saved registers to reconstruct the secret.
+        </p>
+        <div class="note">
+          The core trick is simple: the dump contains believable plaintext such as
+          <code>another</code>, <code>year</code>, and <code>pajat fönster</code>, but those are
+          just arguments passed into the crash path. The actual flag is stored in transformed form.
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What We Started With</h2>
+      <div class="card">
+        <p>The challenge file was a Windows crash dump named <code>030426-4281-01.dmp</code>.</p>
+        <p>The first useful check was simply identifying the file type:</p>
+        <pre><code>file 030426-4281-01.dmp
+
+030426-4281-01.dmp: MS Windows 64bit crash dump, version 15.19041, 4 processors, small dump</code></pre>
+        <p>
+          That tells us this is not an application log or a memory snapshot in a custom format.
+          It is a real Windows minidump / kernel crash dump artifact.
+        </p>
+        <p>Even before deeper analysis, the dump already gives us some useful constraints:</p>
+        <ul>
+          <li>It is a 64-bit Windows crash dump.</li>
+          <li>The OS build is <code>15.19041</code>.</li>
+          <li>The crash happened on a system with <code>4 processors</code>.</li>
+          <li>The dump is small, so we should expect selective state instead of full RAM.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>High-Level Plan</h2>
+      <ol class="steps">
+        <li>Extract obvious strings from the dump and look for challenge-specific artifacts.</li>
+        <li>Identify whether the crash involved a custom driver or ordinary Windows code.</li>
+        <li>Find any hardcoded strings, registry paths, or suspicious bugcheck arguments.</li>
+        <li>Disassemble the relevant driver code path to understand what happens before the crash.</li>
+        <li>Recover the saved CPU context from the dump and inspect registers at crash time.</li>
+        <li>Decode the transformed bytes into the real flag.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Step 1: Pull Strings from the Dump</h2>
+      <div class="card">
+        <p>The fastest first move is always broad string extraction:</p>
+        <pre><code>strings -el 030426-4281-01.dmp | head -n 200
+strings -a 030426-4281-01.dmp | rg -i "flag|Driver1|fonster"</code></pre>
+        <p>This immediately revealed several important artifacts:</p>
+        <ul>
+          <li><code>\??\C:\Users\Administrator\Desktop\Driver1.sys</code></li>
+          <li><code>\Device\HarddiskVolume2\Users\Administrator\Desktop\Driver1.sys</code></li>
+          <li><code>\Registry\Machine\Software\fonster</code></li>
+          <li><code>flag</code></li>
+          <li><code>\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\Driver1</code></li>
+          <li><code>\Driver\Driver1</code></li>
+        </ul>
+        <p>
+          That is already enough to say the crash involves a custom kernel driver named
+          <code>Driver1.sys</code>, and that the driver is connected to a registry key
+          <code>HKLM\Software\fonster</code> with a value named <code>flag</code>.
+        </p>
+        <p>
+          The combination of a desktop-loaded driver path, a service entry under
+          <code>ControlSet001\Services</code>, and a dedicated driver object name is strong evidence
+          that this challenge was intentionally staged around a custom kernel component rather than a
+          random Windows crash.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 2: Check the Obvious Strings Near the Registry Key</h2>
+      <div class="card">
+        <p>Near that registry string block, the dump also contained these plain ASCII fragments:</p>
+        <pre><code>another
+year
+pajat fönster</code></pre>
+        <p>
+          In the raw dump, the last string is not even stored as one nice clean token. It appears as
+          split fragments like <code>pajat f</code> and <code>nster</code>, which is a good reminder
+          that string output alone can be misleading when it crosses memory boundaries.
+        </p>
+        <p>
+          These looked promising at first, but they turned out to be bait. That is a common CTF
+          pattern: put readable words near the real logic so people stop at the first plausible guess.
+        </p>
+        <div class="note">
+          Lesson: if a challenge gives you readable text too early, do not assume it is the flag.
+          Confirm how the program uses those bytes.
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 3: Read the Crash Header</h2>
+      <div class="card">
+        <p>We parsed the dump header directly to recover the bugcheck code:</p>
+        <pre><code>BugCheckCode = 0x29</code></pre>
+        <p>
+          <code>0x29</code> is <code>SECURITY_SYSTEM</code>. That matters because the suspicious
+          strings were not just passive leftovers in memory. The custom driver was deliberately
+          causing a system bugcheck and passing controlled arguments into it.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 4: Find the Driver Strings and Code References</h2>
+      <div class="card">
+        <p>
+          The key move was locating the actual code references to the suspicious strings instead of
+          just reading them as raw text.
+        </p>
+        <p>Searching for RIP-relative references showed this:</p>
+        <pre><code>0x4b0da -> 0x4bacc  (\Registry\Machine\Software\fonster)
+0x4b0ec -> 0x4bb1c  (flag)
+0x4b188 -> 0x4bb2c  (another)
+0x4b194 -> 0x4bb3c  (year)
+0x4b1a0 -> 0x4bb4c  (pajat fönster)</code></pre>
+        <p>
+          That told us one function was actively using all five strings together. So the next step
+          was to disassemble that function.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 5: Disassemble the Critical Function</h2>
+      <div class="card">
+        <p>The important part of the function looked like this:</p>
+        <pre><code>lea rdx, [rip+0x9eb]   ; "\Registry\Machine\Software\fonster"
+lea rcx, [rsp+0x60]
+call ...
+
+lea rdx, [rip+0xa29]   ; "flag"
+lea rcx, [rsp+0x70]
+call ...
+
+...
+
+lea r8, [rip+0x99d]    ; "another"
+mov ecx, 0x29
+lea r9, [rip+0x9a1]    ; "year"
+mov [rsp+0x20], r8
+lea rdx, [rip+0x9a5]   ; "pajat fönster"
+call ...
+</code></pre>
+        <p>
+          The structure is important:
+        </p>
+        <ul>
+          <li>First it resolves the registry path and the value name <code>flag</code>.</li>
+          <li>Then it reads registry data into a stack buffer.</li>
+          <li>After that it loads <code>another</code>, <code>year</code>, and <code>pajat fönster</code>.</li>
+          <li>Finally it calls into the bugcheck path using those strings as arguments.</li>
+        </ul>
+        <p>
+          This means the readable words were bugcheck arguments, not the flag itself.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 6: Recover the Saved Crash Context</h2>
+      <div class="card">
+        <p>
+          A minidump often stores a Windows <code>CONTEXT</code> record. We searched for a valid x64
+          context block and found one whose stack pointer matched the active crash frame.
+        </p>
+        <p>Important recovered registers:</p>
+        <pre><code>ContextFlags = 0x10000f
+Rcx = 0x29
+Rdx = 0xfffff80219131ab0
+R8  = 0xfffff80219131a90
+R9  = 0xfffff80219131aa0
+Rsp = 0xffffb183ccd34758
+Rbp = 0xffffb183ccd34860
+Rip = 0xfffff802154071b0</code></pre>
+        <p>
+          The values in <code>RCX</code>, <code>RDX</code>, <code>R8</code>, and <code>R9</code>
+          align with the bugcheck call arguments we had already identified. That confirmed we were
+          looking at the real crash-time register state.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 7: Inspect the Saved XMM Registers</h2>
+      <div class="card">
+        <p>
+          The driver contained vector instructions just before the string table. That suggested the
+          flag data might not stay in ordinary general-purpose registers.
+        </p>
+        <p>From the saved context we extracted:</p>
+        <pre><code>XMM14 = 8a91043d8b84177888a05720ceca3f3f
+XMM15 = cbca3f7c91915031ce915635ffff6048</code></pre>
+        <p>
+          Concatenated together, that gives a 32-byte blob:
+        </p>
+        <pre><code>8a91043d8b84177888a05720ceca3f3fcbca3f7c91915031ce915635ffff6048</code></pre>
+        <p>
+          That is exactly the right size for a short transformed flag string.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 8: Infer the Decode Method</h2>
+      <div class="card">
+        <p>
+          Since the known flag format starts with <code>undut{</code>, we can use that as a crib.
+          XOR the first six bytes of the blob with <code>undut{</code>:
+        </p>
+        <pre><code>cipher: 8a 91 04 3d 8b 84
+plain : 75 6e 64 75 74 7b
+key   : ff ff 60 48 ff ff</code></pre>
+        <p>
+          That partial key immediately suggests a repeating XOR key. Testing the repeating 8-byte key
+          pattern <code>ff ff 60 48 ff ff 60 48</code> produces a coherent plaintext.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 9: Decode the Blob</h2>
+      <div class="card">
+        <p>Applying the repeating XOR key gives:</p>
+        <pre><code>undut{w0w_7h15_w45_4nn0y1n6}</code></pre>
+        <p>
+          This is the real flag. It also explains why the plain strings were wrong: the challenge
+          was designed so that a shallow strings-only analysis would produce believable but incorrect
+          answers.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why the Earlier Guesses Failed</h2>
+      <div class="split">
+        <div class="card">
+          <h3>What looked tempting</h3>
+          <ul>
+            <li><code>another</code></li>
+            <li><code>year</code></li>
+            <li><code>pajat fönster</code></li>
+          </ul>
+          <p>Those are human-readable and close to <code>flag</code> in memory.</p>
+        </div>
+        <div class="card">
+          <h3>Why they were wrong</h3>
+          <ul>
+            <li>They were passed into the bugcheck path as arguments.</li>
+            <li>They were not read back as one contiguous flag string.</li>
+            <li>The actual secret survived in vector register state, not as plain text.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Takeaways for Learners</h2>
+      <div class="card">
+        <ul>
+          <li>Start with strings, but do not stop there.</li>
+          <li>Always ask: which code references this string?</li>
+          <li>If a dump involves a custom driver, inspect crash-time register state.</li>
+          <li>Saved <code>CONTEXT</code> structures can be more valuable than heap or stack strings.</li>
+          <li>Vector registers matter. Modern code may keep transformed secrets in <code>XMM</code>/<code>YMM</code>.</li>
+          <li>Known flag prefixes are powerful when testing XOR or simple substitution schemes.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Minimal Reproduction Workflow</h2>
+      <div class="card">
+        <pre><code>1. file 030426-4281-01.dmp
+2. strings -el 030426-4281-01.dmp | rg "Driver1|fonster|flag"
+3. locate code references to those strings
+4. disassemble the referencing function
+5. recover the saved x64 CONTEXT from the dump
+6. extract XMM14 and XMM15
+7. concatenate the 32-byte blob
+8. derive repeating XOR key from "undut{"
+9. decode -> undut{w0w_7h15_w45_4nn0y1n6}</code></pre>
+      </div>
+    </section>
+  </main>
+  <script>
+    const cards = document.querySelectorAll('.card');
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      }
+    }, { threshold: 0.12 });
+
+    for (const card of cards) {
+      observer.observe(card);
+    }
+  </script>
+</body>
+</html>

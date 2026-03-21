@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CASCADA Wi-Fi SDR Writeup</title>
+  <style>
+    :root {
+      --bg: #f6f4ee;
+      --panel: rgba(255, 252, 244, 0.9);
+      --panel-strong: #fffdf8;
+      --ink: #1e1b16;
+      --muted: #6a6257;
+      --line: rgba(40, 32, 20, 0.12);
+      --accent: #c85d2f;
+      --accent-soft: rgba(200, 93, 47, 0.12);
+      --accent-deep: #8f3e17;
+      --code-bg: #181613;
+      --code-ink: #f4eee1;
+      --ok: #1f7a49;
+      --warn: #7d5200;
+      --shadow: 0 20px 60px rgba(51, 39, 21, 0.12);
+      --radius: 24px;
+      --mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+      --sans: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(200, 93, 47, 0.14), transparent 28%),
+        radial-gradient(circle at top right, rgba(31, 122, 73, 0.10), transparent 22%),
+        linear-gradient(180deg, #f9f7f1 0%, var(--bg) 100%);
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--accent-deep);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .page {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 28px;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sidebar h1 {
+      margin: 16px 0 10px;
+      font-size: 30px;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .title-meta {
+      margin: -2px 0 14px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+    }
+
+    .sidebar p {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .meta {
+      display: grid;
+      gap: 10px;
+      padding: 14px 0 18px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 18px;
+    }
+
+    .meta div {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .meta strong {
+      display: block;
+      color: var(--ink);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--ink);
+      background: transparent;
+      border: 1px solid transparent;
+      transition: 160ms ease;
+    }
+
+    .nav a:hover {
+      background: rgba(255, 255, 255, 0.55);
+      border-color: var(--line);
+      text-decoration: none;
+    }
+
+    .content {
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero,
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      background:
+        linear-gradient(135deg, rgba(200, 93, 47, 0.10), rgba(255, 255, 255, 0.72)),
+        var(--panel-strong);
+    }
+
+    .hero h2 {
+      margin: 12px 0 10px;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      max-width: 12ch;
+    }
+
+    .hero p {
+      max-width: 72ch;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 26px;
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      display: block;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .section h3 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      letter-spacing: -0.03em;
+    }
+
+    .section > p:first-of-type {
+      margin-top: 0;
+    }
+
+    .kicker {
+      margin-bottom: 14px;
+      color: var(--accent-deep);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .callout {
+      margin: 20px 0;
+      padding: 16px 18px;
+      border-left: 4px solid var(--accent);
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 16px;
+    }
+
+    .callout.ok {
+      border-left-color: var(--ok);
+      background: rgba(31, 122, 73, 0.08);
+    }
+
+    .callout.warn {
+      border-left-color: var(--warn);
+      background: rgba(125, 82, 0, 0.08);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .card h4 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    pre {
+      margin: 18px 0;
+      padding: 18px;
+      overflow-x: auto;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.95em;
+      background: rgba(0, 0, 0, 0.04);
+      padding: 0.12em 0.35em;
+      border-radius: 6px;
+    }
+
+    ol,
+    ul {
+      margin: 14px 0 14px 22px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .flag {
+      margin-top: 18px;
+      padding: 20px;
+      border-radius: 20px;
+      background:
+        linear-gradient(135deg, rgba(31, 122, 73, 0.14), rgba(255, 255, 255, 0.82)),
+        var(--panel-strong);
+      border: 1px solid rgba(31, 122, 73, 0.18);
+    }
+
+    .flag strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ok);
+      margin-bottom: 8px;
+    }
+
+    .flag code {
+      display: inline-block;
+      padding: 10px 12px;
+      font-size: 15px;
+      background: rgba(31, 122, 73, 0.08);
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 12px 0 40px;
+    }
+
+    @media (max-width: 1080px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hero-grid,
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .page {
+        padding: 18px;
+      }
+
+      .hero,
+      .section,
+      .sidebar {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <div class="eyebrow">CTF Wi-Fi / SDR</div>
+      <h1>CASCADA Writeup</h1>
+      <div class="title-meta">Category: Forensics</div>
+      <p>
+        Full solve path for the <code>capture.cfile</code> challenge: signal ID, frame decoding,
+        WPA2 cracking, CCMP decryption, and final flag recovery.
+      </p>
+
+      <div class="meta">
+        <div>
+          <strong>Signal</strong>
+          2412 MHz / Wi-Fi Channel 1
+        </div>
+        <div>
+          <strong>Protocol</strong>
+          IEEE 802.11 OFDM + WPA2
+        </div>
+        <div>
+          <strong>Recovered PSK</strong>
+          <code>bestfriends4eva</code>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="#overview">Overview</a>
+        <a href="#signal-id">1. Identify The Signal</a>
+        <a href="#decoder">2. Make OpenOFDM Usable</a>
+        <a href="#frames">3. Decode The Frames</a>
+        <a href="#handshake">4. Extract The WPA2 Handshake</a>
+        <a href="#psk">5. Crack The PSK</a>
+        <a href="#decrypt">6. Decrypt The Traffic</a>
+        <a href="#flag">7. Recover The Flag</a>
+        <a href="#commands">Commands Summary</a>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section class="hero" id="overview">
+        <div class="eyebrow">Solve Summary</div>
+        <h2>From raw IQ to decrypted Wi-Fi payload.</h2>
+        <p>
+          The challenge gives a raw GNU Radio <code>.cfile</code> IQ recording centered on
+          <code>2412 MHz</code>. The correct solve path is not just “this is Wi-Fi”, and it is not
+          just the WPA2 password either. The interesting part is that the capture contains enough
+          management traffic to identify the network, enough handshake material to recover the
+          passphrase, and enough protected data frames to decrypt the actual application payload
+          containing the flag.
+        </p>
+
+        <div class="hero-grid">
+          <div class="metric">
+            <strong>SSID</strong>
+            <span>Rockar dig!</span>
+          </div>
+          <div class="metric">
+            <strong>PSK</strong>
+            <span>bestfriends4eva</span>
+          </div>
+          <div class="metric">
+            <strong>Flag</strong>
+            <span>Recovered from decrypted TCP data</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="signal-id">
+        <div class="kicker">Step 1</div>
+        <h3>Identify the signal</h3>
+        <p>
+          The center frequency is <code>2412 MHz</code>, which maps directly to Wi-Fi channel 1.
+          Looking at the burst structure and the 802.11 OFDM preamble confirms that the signal is
+          legacy 802.11 OFDM traffic.
+        </p>
+
+        <div class="cards">
+          <div class="card">
+            <h4>Why this is Wi-Fi</h4>
+            <p>
+              The bursts decode with a valid 802.11 <code>SIGNAL</code> field, the frame lengths are
+              consistent, and repeated management frames appear exactly like beacon traffic.
+            </p>
+          </div>
+          <div class="card">
+            <h4>Why the task is more than identification</h4>
+            <p>
+              The challenge text asks what Harriet captured, but the capture also contains a full
+              WPA2 exchange and protected data. The flag is in the decrypted payload, not in the
+              signal label alone.
+            </p>
+          </div>
+        </div>
+
+        <pre><code># 2412 MHz = Wi-Fi channel 1
+# First conclusion:
+#   IEEE 802.11 on channel 1
+# Later conclusion:
+#   WPA2-protected network with enough traffic to fully solve the challenge</code></pre>
+      </section>
+
+      <section class="section" id="decoder">
+        <div class="kicker">Step 2</div>
+        <h3>Make OpenOFDM usable under Python 3</h3>
+        <p>
+          <code>openofdm</code> was useful as the PHY reference, but the repo is old and assumes
+          Python 2. The practical move was to port the decoder to Python 3 and add a small wrapper
+          for GNU Radio <code>.cfile</code> input.
+        </p>
+
+        <div class="callout warn">
+          The original OpenOFDM scripts were not ready to run as-is. Python 2 syntax, vendored
+          dependency issues, and the missing <code>wltrace</code> parser all had to be handled.
+        </div>
+
+        <p>Key fixes:</p>
+        <ul>
+          <li>Convert Python 2 syntax to Python 3 syntax.</li>
+          <li>Replace legacy octal literals and integer division.</li>
+          <li>Handle missing <code>wltrace</code> gracefully and still expose raw bytes.</li>
+          <li>Add a wrapper to load <code>capture.cfile</code> directly.</li>
+          <li>Patch vendored <code>commpy</code> compatibility issues.</li>
+        </ul>
+
+        <pre><code class="language-python"># Example Python 2 to Python 3 style fixes
+from io import StringIO
+
+# old:
+# print "hello"
+# self.polarity.next()
+# 0133
+
+# new:
+print("hello")
+next(self.polarity)
+0o133</code></pre>
+
+        <pre><code class="language-python"># Minimal .cfile loader idea
+import numpy as np
+
+raw = np.fromfile("capture.cfile", dtype=np.float32)
+iq = raw[0::2] + 1j * raw[1::2]</code></pre>
+      </section>
+
+      <section class="section" id="frames">
+        <div class="kicker">Step 3</div>
+        <h3>Decode the management frames first</h3>
+        <p>
+          Once the decoder was working, the first clean frames were repeated beacons, one probe
+          request, and one probe response. This established the network identity and gave the first
+          solid clue.
+        </p>
+
+        <pre><code>[  0] 80 00 00 00 ff ff ff ff ff ff 48 22 54 12 34 56
+[ 16] 48 22 54 12 34 56 00 00 c9 20 1b 58 8a 45 06 00
+[ 32] 64 00 11 04 00 0b 52 6f 63 6b 61 72 20 64 69 67
+[ 48] 21 01 08 82 84 8b 96 0c 12 18 24 03 01 01 05 04</code></pre>
+
+        <p>
+          The important part is the SSID information element:
+        </p>
+
+        <pre><code>00 0b 52 6f 63 6b 61 72 20 64 69 67 21
+   ^^ length = 11
+      "Rockar dig!"</code></pre>
+
+        <div class="callout">
+          <strong>Clue:</strong> the SSID <code>Rockar dig!</code> is not the flag. It is the first
+          useful pivot and strongly hints at <code>rockyou</code> later.
+        </div>
+      </section>
+
+      <section class="section" id="handshake">
+        <div class="kicker">Step 4</div>
+        <h3>Recognize the WPA2 association and 4-way handshake</h3>
+        <p>
+          After the early beacon/probe traffic, the capture contains an association request,
+          association response, and then four EAPOL key frames. That changes the task completely:
+          now the challenge can be solved as a WPA2 crack followed by traffic decryption.
+        </p>
+
+        <pre><code># Representative EAPOL frames
+08 02 ... aa aa 03 00 00 00 88 8e ...
+08 01 ... aa aa 03 00 00 00 88 8e ...
+
+# 0x888e = EAPOL</code></pre>
+
+        <p>
+          The four relevant frames are:
+        </p>
+        <ol>
+          <li>Message 1 from AP to client with ANonce.</li>
+          <li>Message 2 from client to AP with SNonce and MIC.</li>
+          <li>Message 3 from AP to client.</li>
+          <li>Message 4 from client to AP.</li>
+        </ol>
+
+        <div class="cards">
+          <div class="card">
+            <h4>AP / BSSID</h4>
+            <p><code>48:22:54:12:34:56</code></p>
+          </div>
+          <div class="card">
+            <h4>Station</h4>
+            <p><code>74:86:e2:12:34:56</code></p>
+          </div>
+        </div>
+
+        <p>
+          After extracting those frames, I built a minimal raw 802.11 PCAP and fed it to
+          <code>wpapcap2john</code>.
+        </p>
+
+        <pre><code class="language-python"># Build a raw 802.11 PCAP from decoded frames
+import struct
+
+with open("handshake.pcap", "wb") as f:
+    f.write(struct.pack("&lt;IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 65535, 105))
+    ts = 0
+    for frame in frames:
+        ts += 1
+        f.write(struct.pack("&lt;IIII", ts, 0, len(frame), len(frame)))
+        f.write(frame)</code></pre>
+
+        <pre><code>wpapcap2john handshake.pcap &gt; handshake.hash</code></pre>
+      </section>
+
+      <section class="section" id="psk">
+        <div class="kicker">Step 5</div>
+        <h3>Crack the WPA2 PSK</h3>
+        <p>
+          This is where the SSID clue pays off. <code>Rockar dig!</code> strongly suggests
+          <code>rockyou</code>, and the host already had <code>/usr/share/wordlists/rockyou.txt</code>.
+        </p>
+
+        <pre><code>HOME=/tmp/johnhome john \
+  --wordlist=/usr/share/wordlists/rockyou.txt \
+  handshake.hash \
+  --format=wpapsk</code></pre>
+
+        <pre><code>Loaded 1 password hash (wpapsk, WPA/WPA2/PMF/PMKID PSK ...)
+bestfriends4eva  (Rockar dig!)
+1g 0:00:00:02 DONE</code></pre>
+
+        <div class="callout ok">
+          The recovered WPA2 passphrase is <code>bestfriends4eva</code>. This is real, but it is
+          still not the final flag.
+        </div>
+
+        <p>
+          I also verified the passphrase manually by recomputing the EAPOL MIC from message 2.
+        </p>
+
+        <pre><code class="language-python">import hashlib
+import hmac
+
+ssid = b"Rockar dig!"
+passphrase = b"bestfriends4eva"
+
+pmk = hashlib.pbkdf2_hmac("sha1", passphrase, ssid, 4096, 32)
+
+def prf512(key, A, B):
+    out = b""
+    i = 0
+    while len(out) &lt; 64:
+        out += hmac.new(key, A + b"\\x00" + B + bytes([i]), hashlib.sha1).digest()
+        i += 1
+    return out[:64]
+
+ptk = prf512(pmk, b"Pairwise key expansion", B)
+kck = ptk[:16]
+mic = hmac.new(kck, eapol_with_zeroed_mic, hashlib.sha1).digest()[:16]</code></pre>
+      </section>
+
+      <section class="section" id="decrypt">
+        <div class="kicker">Step 6</div>
+        <h3>Derive the temporal key and decrypt CCMP data</h3>
+        <p>
+          After the handshake, the capture contains protected data frames. These were CCMP frames,
+          so the next job was to derive the temporal key from the recovered PSK and decrypt the
+          payloads.
+        </p>
+
+        <p>
+          The pairwise temporal key is the third 16-byte chunk of the PTK:
+        </p>
+
+        <pre><code class="language-python">tk = ptk[32:48]</code></pre>
+
+        <p>
+          For each CCMP frame:
+        </p>
+        <ul>
+          <li>Take the 24-byte 802.11 header.</li>
+          <li>Take the 8-byte CCMP header.</li>
+          <li>Build the CCMP nonce from priority, transmitter address, and packet number.</li>
+          <li>Use AES-CCM to decrypt the protected payload.</li>
+        </ul>
+
+        <pre><code class="language-python">from Cryptodome.Cipher import AES
+
+hdr = frame[:24]
+ccmp = frame[24:32]
+enc = frame[32:-12]          # ciphertext, excluding MIC and FCS
+
+# PN = PN5 PN4 PN3 PN2 PN1 PN0
+pn = bytes([ccmp[7], ccmp[6], ccmp[5], ccmp[4], ccmp[1], ccmp[0]])
+
+# Non-QoS data uses priority 0
+nonce = b"\\x00" + hdr[10:16] + pn
+
+cipher = AES.new(tk, AES.MODE_CCM, nonce=nonce, mac_len=8)
+plaintext = cipher.decrypt(enc)</code></pre>
+
+        <p>
+          That produced clean LLC/IP/TCP payloads. One of the decrypted frames contains the flag as
+          plaintext at the end of the TCP payload.
+        </p>
+
+        <pre><code>IDX 74 PT ...
+...
+756e6475747b4d6135743472335f34765f34764b3064346e316e675f3063685f44336b727970743372316e675f34765f573146317d</code></pre>
+
+        <pre><code>ASCII:
+undut{Ma5t4r3_4v_4vK0d4n1ng_0ch_D3krypt3r1ng_4v_W1F1}</code></pre>
+      </section>
+
+      <section class="section" id="flag">
+        <div class="kicker">Step 7</div>
+        <h3>Recover the flag</h3>
+        <p>
+          The actual submission string is not the SSID and not the WPA2 password. It is the
+          plaintext recovered from the decrypted Wi-Fi payload.
+        </p>
+
+        <div class="flag">
+          <strong>Final Flag</strong>
+          <code>undut{Ma5t4r3_4v_4vK0d4n1ng_0ch_D3krypt3r1ng_4v_W1F1}</code>
+        </div>
+
+        <div class="callout ok">
+          Short version: identify Wi-Fi, extract handshake, crack PSK
+          <code>bestfriends4eva</code>, decrypt CCMP traffic, recover the flag from the TCP
+          payload.
+        </div>
+      </section>
+
+      <section class="section" id="commands">
+        <div class="kicker">Appendix</div>
+        <h3>Command summary</h3>
+        <pre><code># 1. Clone / patch OpenOFDM
+git clone https://github.com/jhshi/openofdm.git
+
+# 2. Decode the raw GNU Radio file
+python3 openofdm/scripts/decode_capture.py capture.cfile
+
+# 3. Extract and package a WPA handshake
+wpapcap2john handshake.pcap &gt; handshake.hash
+
+# 4. Crack the PSK
+HOME=/tmp/johnhome john \
+  --wordlist=/usr/share/wordlists/rockyou.txt \
+  handshake.hash \
+  --format=wpapsk
+
+# 5. Use the PSK to derive PTK/TK and decrypt CCMP traffic
+# 6. Recover the flag from the decrypted payload</code></pre>
+
+        <h3>Codex session and Python scripts</h3>
+        <p>
+          The latest local Codex session for this writeup was stored at
+          <code>/home/userhonest/.codex/sessions/2026/03/21/rollout-2026-03-21T21-55-54-019d122e-dc63-79b2-be27-c448efe8649d.jsonl</code>.
+        </p>
+        <pre><code># Python scripts used in the solve
+openofdm/scripts/decode_capture.py
+openofdm/scripts/decode.py
+
+# decode_capture.py
+#   Loads GNU Radio float32 IQ from capture.cfile
+#   Detects active packet regions
+#   Feeds each region into the OpenOFDM decoder
+#
+# decode.py
+#   Main OpenOFDM PHY decoder used to parse 802.11 OFDM frames
+#   Patched for Python 3 compatibility during the solve</code></pre>
+      </section>
+
+      <div class="footer">
+        Standalone writeup page generated locally for <code>capture.cfile</code>.
+      </div>
+    </main>
+  </div>
+</body>
+</html>

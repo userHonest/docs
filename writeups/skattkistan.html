@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skattkistan bot</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --panel: #ffffff;
+        --text: #0f172a;
+        --muted: #475569;
+        --line: #dbe4ee;
+        --accent: #149eca;
+        --accent-soft: #e6f7fc;
+        --code-bg: #f8fafc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          "SF Pro Display",
+          "Segoe UI",
+          "Helvetica",
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+      }
+
+      body {
+        line-height: 1.65;
+      }
+
+      .page {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+
+      .hero {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 32px;
+        background: linear-gradient(180deg, #ffffff 0%, #fafdff 100%);
+        box-shadow: 0 12px 40px rgba(15, 23, 42, 0.05);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #bfe8f5;
+        color: var(--accent);
+        background: var(--accent-soft);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 18px 0 12px;
+        font-size: clamp(2.2rem, 6vw, 4rem);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 760px;
+        font-size: 1.05rem;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
+
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px;
+        background: var(--panel);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.03);
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .stat span {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      section {
+        margin-top: 32px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 28px;
+        background: var(--panel);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.03);
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1.5rem;
+        letter-spacing: -0.03em;
+      }
+
+      p {
+        margin: 12px 0;
+      }
+
+      ul,
+      ol {
+        margin: 14px 0;
+        padding-left: 22px;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      code {
+        padding: 0.18em 0.42em;
+        border-radius: 8px;
+        background: var(--code-bg);
+        border: 1px solid var(--line);
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        font-size: 0.95em;
+      }
+
+      pre {
+        margin: 16px 0;
+        padding: 18px;
+        overflow-x: auto;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: var(--code-bg);
+      }
+
+      pre code {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        font-size: 0.92rem;
+      }
+
+      .callout {
+        margin-top: 16px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid #bfe8f5;
+        background: #f5fcfe;
+      }
+
+      .final-flag {
+        margin-top: 18px;
+        padding: 20px;
+        border-radius: 20px;
+        border: 1px solid #bfe8f5;
+        background: #eefbfe;
+      }
+
+      .final-flag strong {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--accent);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+      }
+
+      .footer {
+        margin-top: 28px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <span class="eyebrow">Reversing Write-up</span>
+        <h1>Skattkistan bot</h1>
+        <p class="lead">
+          This write-up covers the solve from first contact with the file, through
+          reversing the Amiga executable, recovering the correct movement path,
+          and extracting the final flag.
+        </p>
+        <div class="grid">
+          <div class="stat">
+            <strong>Challenge File</strong>
+            <span><code>skattkistan</code></span>
+          </div>
+          <div class="stat">
+            <strong>Category</strong>
+            <span>Reversing</span>
+          </div>
+          <div class="stat">
+            <strong>Flag Format</strong>
+            <span><code>undut{...}</code></span>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <h2>1. Initial Triage</h2>
+        <p>
+          The first step was to locate the file the challenge referred to. In the
+          workspace, the likely target was <code>skattkistan</code>.
+        </p>
+        <pre><code>rg --files | rg 'skat'</code></pre>
+        <p>
+          That identified two useful artifacts in the directory: the executable
+          itself and a Windows zone marker:
+        </p>
+        <pre><code>/home/userhonest/undutmaning/skattkistan
+/home/userhonest/undutmaning/skattkistan:Zone.Identifier</code></pre>
+        <p>
+          Running <code>file</code> on it showed that this was not a text file or a
+          normal Linux ELF binary:
+        </p>
+        <pre><code>file skattkistan
+skattkistan: AmigaOS loadseg()ble executable/binary</code></pre>
+        <p>
+          That immediately changed the approach. Instead of treating it as a script
+          or archive, this had to be reversed as an old Amiga executable.
+        </p>
+        <p>
+          A quick direct flag search also failed, which was useful because it ruled
+          out the simplest case where the flag was embedded as a visible string:
+        </p>
+        <pre><code>strings -n 4 skattkistan | rg 'undut\{|flag|FLAG|Undut'</code></pre>
+      </section>
+
+      <section>
+        <h2>2. Pulling Strings</h2>
+        <p>
+          The next step was to inspect the binary for visible strings. Even when a
+          program is compiled, user-facing messages usually survive.
+        </p>
+        <pre><code>strings -n 3 skattkistan</code></pre>
+        <p>
+          This revealed Swedish text such as:
+        </p>
+        <ul>
+          <li><code>Du är vid ett vägskäl</code></li>
+          <li><code>Vilken väg [h=höger, v=vänster]?</code></li>
+          <li><code>Du hittade en pärla!</code></li>
+          <li><code>Du hittade ett silvermynt!</code></li>
+          <li><code>Du hittade ett halsband!</code></li>
+          <li><code>Du hittade skattkistan!</code></li>
+          <li><code>Du är vilse</code></li>
+        </ul>
+        <p>
+          From that alone, the high-level behavior was already clear: the binary was
+          implementing a left/right path game, where the user enters <code>h</code>
+          or <code>v</code> and eventually reaches different treasure events.
+        </p>
+        <div class="callout">
+          The Swedish strings gave the progression of the challenge almost for free:
+          path choice prompt, minor treasure milestones, a treasure chest event, and
+          a failure branch for getting lost.
+        </div>
+      </section>
+
+      <section>
+        <h2>3. Disassembly and Structure</h2>
+        <p>
+          Since the file was an Amiga executable, I used <code>radare2</code> with
+          the <code>m68k</code> architecture. The binary was small and mostly
+          stripped, but still easy enough to inspect manually.
+        </p>
+        <pre><code>which r2
+/usr/bin/r2</code></pre>
+        <pre><code>r2 -q -a m68k -b 32 skattkistan
+aaa
+pd</code></pre>
+        <p>
+          The important findings were:
+        </p>
+        <ul>
+          <li>The program reads one byte at a time and accepts <code>h</code> or <code>v</code>.</li>
+          <li>It compares the user path against several hardcoded 32-byte values.</li>
+          <li>If the correct path is reached, it prints one of the treasure messages.</li>
+          <li>The chest path triggers a hidden decode routine instead of only printing a message.</li>
+        </ul>
+        <div class="callout">
+          The key point was that the binary did not store the full path in plaintext.
+          It stored hash values and compared the user input against those.
+        </div>
+      </section>
+
+      <section>
+        <h2>4. Understanding the Hash Check</h2>
+        <p>
+          At first glance the 32-byte constants looked like plain SHA-256 digests,
+          and they were. The subtle part was that the binary was not checking
+          <code>SHA256(path)</code>. It was checking:
+        </p>
+        <pre><code>SHA256(SHA256(path))</code></pre>
+        <p>
+          That mattered because an early brute-force using only one SHA-256 layer
+          gave no useful hits. After re-reading the control flow, it became clear
+          that the program hashed the move string once, then hashed the 32-byte
+          result again before comparing to the embedded constants.
+        </p>
+      </section>
+
+      <section>
+        <h2>5. Recovering the Paths</h2>
+        <p>
+          Once the double-hash behavior was understood, I wrote a small native
+          brute-forcer in C using OpenSSL to test candidate strings over the alphabet
+          <code>{h, v}</code>.
+        </p>
+        <pre><code>digest = SHA256(SHA256(candidate))</code></pre>
+        <p>
+          That quickly recovered the known treasure checkpoints:
+        </p>
+        <ul>
+          <li>Pearl: <code>h</code></li>
+          <li>Silver coin: <code>hhv</code></li>
+          <li>Necklace: <code>hhvvhvvhhhv</code></li>
+        </ul>
+        <p>
+          The sequence of hits was useful beyond just confirming that the brute-force
+          worked. Each success produced a later treasure message than the previous one,
+          which strongly suggested the program was walking one persistent route state
+          forward rather than validating unrelated standalone inputs.
+        </p>
+        <div class="callout">
+          In practice, that means <code>h</code>, <code>hhv</code>, and
+          <code>hhvvhvvhhhv</code> behave like checkpoints on the same maze path.
+          That is why extending the necklace route was a better search strategy than
+          restarting from scratch over the full input space.
+        </div>
+        <p>
+          Those hits strongly suggested the challenge was a single consistent route
+          where each treasure is an intermediate checkpoint. So instead of brute-forcing
+          every possible string for the chest, I restricted the search to strings that
+          extended the necklace path.
+        </p>
+        <p>
+          That produced the chest route:
+        </p>
+        <pre><code>hhvvhvvhhhvvvhhvhvvvhhvhvhhhvvvhhvhhhv</code></pre>
+        <p>
+          That route is important for two separate reasons: it satisfies the final
+          treasure check, and it also becomes the material for the decode key used in
+          the hidden payload routine.
+        </p>
+      </section>
+
+      <section>
+        <h2>6. Hidden Decode Routine</h2>
+        <p>
+          Reaching the chest was not the final step. The binary then used a hidden
+          decode routine. The important detail here was that the XOR key was not the
+          double hash used for verification. It used the first hash:
+        </p>
+        <pre><code>key = SHA256(chest_path)</code></pre>
+        <p>
+          With the chest route recovered, the next step was:
+        </p>
+        <ol>
+          <li>Compute <code>SHA256(path)</code> for the recovered chest path.</li>
+          <li>Use that 32-byte digest as the XOR key.</li>
+          <li>Scan the binary for a 32-byte block that decodes into printable text.</li>
+        </ol>
+        <p>
+          That led directly to the hidden payload inside the binary.
+        </p>
+        <pre><code>python3 - &lt;&lt;'PY'
+import hashlib
+from pathlib import Path
+path=b'hhvvhvvhhhvvvhhvhvvvhhvhvhhhvvvhhvhhhv'
+p=Path('skattkistan').read_bytes()
+key=hashlib.sha256(path).digest()
+print('key', key.hex())
+for off in range(0, len(p)-32):
+    pt=bytes(p[off+i]^key[i] for i in range(32))
+    if b'undut{' in pt:
+        print('hit', hex(off), pt)
+PY</code></pre>
+        <pre><code>key = 8facdb20194c3a1bdae1cf30f8877f1cf98af74fbf2a2a2788712bc8ef43193e
+offset = 0x964
+decoded = undut{Tr3a5ur3-PzH153KGlPFuZMR}</code></pre>
+        <p>
+          This verification step matters because it proves the final stage was not a
+          guessed decryption. The correct path-derived hash cleanly reveals a printable
+          flag at a single concrete offset in the binary.
+        </p>
+      </section>
+
+      <section>
+        <h2>7. Final Flag</h2>
+        <p>
+          After decoding the payload with the correct XOR key, the flag was:
+        </p>
+        <div class="final-flag">
+          <strong>Flag</strong>
+          <code>undut{Tr3a5ur3-PzH153KGlPFuZMR}</code>
+        </div>
+      </section>
+
+      <section>
+        <h2>8. Summary</h2>
+        <p>
+          The challenge looked simple at first because of the visible strings, but the
+          actual protection was the path verification logic and the extra hidden decode
+          step at the chest. The key solve steps were:
+        </p>
+        <ul>
+          <li>Identify the file as an AmigaOS executable.</li>
+          <li>Extract strings to understand the input model and treasure events.</li>
+          <li>Reverse the hash logic and notice the binary checks <code>SHA256(SHA256(path))</code>.</li>
+          <li>Brute-force the path over <code>h</code> and <code>v</code>.</li>
+          <li>Use <code>SHA256(chest_path)</code> as the XOR key for the final payload.</li>
+          <li>Recover the flag from the binary.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+  </html>

