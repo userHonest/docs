@@ -4,59 +4,273 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>userHonest</title>
-
   <style>
-  * {
-    margin: 0;
-    box-sizing: border-box;
-  }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  body {
-    height: 100vh;
-    background: #000;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
+    :root {
+      --bg: #050505;
+      --fg: #f5f5f5;
+      --muted: rgba(255,255,255,0.58);
+      --line: rgba(255,255,255,0.08);
+      --glow: rgba(255,255,255,0.14);
+    }
 
-  .center {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 22%, rgba(255,255,255,0.08), transparent 20%),
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.04), transparent 25%),
+        radial-gradient(circle at 80% 75%, rgba(255,255,255,0.03), transparent 25%),
+        linear-gradient(180deg, #020202 0%, #090909 100%);
+      color: var(--fg);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      position: relative;
+    }
 
-    /* move content higher */
-    justify-content: flex-start;
+    body::before,
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
 
-    /* horizontal center */
-    align-items: center;
+    body::before {
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
+      opacity: 0.5;
+    }
 
-    /* control vertical offset */
-    padding-top: 120px;
-  }
+    body::after {
+      background:
+        linear-gradient(115deg, transparent 0 42%, rgba(255,255,255,0.04) 50%, transparent 58%),
+        linear-gradient(295deg, transparent 0 45%, rgba(255,255,255,0.025) 50%, transparent 55%);
+      filter: blur(12px);
+      opacity: 0.7;
+    }
 
-  h1 {
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 300;
-    letter-spacing: 0.08em;
-  }
+    .noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.045;
+      background-image:
+        radial-gradient(circle at 20% 20%, white 0.7px, transparent 1px),
+        radial-gradient(circle at 80% 30%, white 0.7px, transparent 1px),
+        radial-gradient(circle at 40% 70%, white 0.7px, transparent 1px),
+        radial-gradient(circle at 70% 80%, white 0.7px, transparent 1px);
+      background-size: 120px 120px;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
 
- .sub-link {
-  margin-top: 60px; /* increase this value to push it further down */
-  font-size: 2rem;
-  opacity: 0.6;
-  text-decoration: none;
-  color: #fff;
-}
+    .frame {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
 
-  .sub-link:hover {
-    opacity: 1;
-  }
-</style>
+    .panel {
+      position: relative;
+      width: min(900px, 92vw);
+      min-height: 68vh;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.02) inset,
+        0 30px 80px rgba(0,0,0,0.55),
+        0 0 120px rgba(255,255,255,0.04);
+      overflow: hidden;
+      border-radius: 24px;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 30%, var(--glow), transparent 30%),
+        linear-gradient(180deg, transparent, rgba(255,255,255,0.025));
+      pointer-events: none;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(0,0,0,0.14);
+    }
+
+    
+
+    .content {
+      min-height: 68vh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 90px 32px 48px;
+      position: relative;
+    }
+
+    .content::before,
+    .content::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 999px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .content::before {
+      width: min(620px, 70vw);
+      height: min(620px, 70vw);
+      opacity: 0.22;
+    }
+
+    .content::after {
+      width: min(420px, 48vw);
+      height: min(420px, 48vw);
+      opacity: 0.12;
+    }
+
+    .hero {
+      position: relative;
+      z-index: 2;
+      max-width: 760px;
+    }
+
+    
+
+    h1 {
+      font-size: clamp(3rem, 8vw, 7rem);
+      line-height: 0.95;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: none;
+      text-shadow: 0 0 30px rgba(255,255,255,0.06);
+    }
+
+    .subtitle {
+      margin: 22px auto 0;
+      max-width: 540px;
+      font-size: clamp(1rem, 1.8vw, 1.15rem);
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .cta-row {
+      margin-top: 38px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .sub-link,
+    .ghost {
+      text-decoration: none;
+      color: var(--fg);
+      padding: 14px 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: 180ms ease;
+      letter-spacing: 0.04em;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .sub-link:hover,
+    .ghost:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.22);
+      box-shadow: 0 10px 40px rgba(255,255,255,0.05);
+    }
+
+    .footer-note {
+      position: absolute;
+      bottom: 22px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: rgba(255,255,255,0.36);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 700px) {
+      .panel {
+        min-height: 78vh;
+        border-radius: 18px;
+      }
+
+      .content {
+        padding: 82px 20px 56px;
+      }
+
+      .footer-note {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+    }
+  </style>
 </head>
-
 <body>
-  <div class="center">
-    <h1>userHonest</h1>
-    <a class="sub-link" href="/docs/writeups.html">CTF Writeups</a>
-  </div>
+  <div class="noise"></div>
+
+  <main class="frame">
+    <section class="panel">
+      <div class="topbar">
+        
+        <div>index / userHonest</div>
+      </div>
+
+      <div class="content">
+        <div class="hero">
+          
+          <h1>userHonest</h1>
+          <p class="subtitle">
+            A page dedicated to malware research, CTF writeups, and general cybersecurity topics. Notes, techniques, and solutions collected from hands-on analysis.
+          </p>
+          <div class="cta-row">
+            <a class="ghost" href="#">Malware Research</a>
+            <a class="sub-link" href="/docs/writeups.html">CTF Writeups</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        <span></span>
+        <span></span>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
