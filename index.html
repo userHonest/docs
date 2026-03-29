@@ -15,7 +15,7 @@
       --bg: #050505;
       --fg: #f5f5f5;
       --muted: rgba(255,255,255,0.58);
-      --line: rgba(255,255,255,0.16);
+      --line: rgba(255,255,255,0.05);
       --glow: rgba(255,255,255,0.14);
     }
 
@@ -47,7 +47,7 @@
         linear-gradient(90deg, var(--line) 1px, transparent 1px);
       background-size: 44px 44px;
       /* remove heavy masking to expose grid */
-      opacity: 0.9;
+      opacity: 0.4;
     }
 
     body::after {
@@ -68,11 +68,11 @@
       background:
         linear-gradient(rgba(255,0,150,0.18), rgba(255,0,150,0.18)) 0% 0% / 40% 20% no-repeat,
         /* push green to extreme top-right */
-        linear-gradient(rgba(0,255,180,0.2), rgba(0,255,180,0.2)) 98% 2% / 38% 26% no-repeat,
+        linear-gradient(rgba(0,255,180,0.2), rgba(0,255,180,0.2)) 100% 0% / 45% 28% no-repeat,
         linear-gradient(rgba(255,255,255,0.14), rgba(255,255,255,0.14)) 20% 50% / 50% 20% no-repeat,
         linear-gradient(rgba(255,0,150,0.14), rgba(255,0,150,0.14)) 10% 75% / 30% 15% no-repeat,
         /* push green to extreme bottom-left */
-        linear-gradient(rgba(0,255,180,0.18), rgba(0,255,180,0.18)) 2% 98% / 40% 22% no-repeat;
+        linear-gradient(rgba(0,255,180,0.18), rgba(0,255,180,0.18)) 0% 100% / 45% 25% no-repeat;
     }
 
     @keyframes rectShift {
@@ -447,7 +447,7 @@
       mix-blend-mode: screen;
       background:
         linear-gradient(120deg, rgba(255,0,150,0.22), transparent 60%) 0% 20% / 50% 40% no-repeat,
-        linear-gradient(300deg, rgba(0,255,180,0.22), transparent 60%) 85% 10% / 45% 40% no-repeat,
+        linear-gradient(300deg, rgba(0,255,180,0.22), transparent 60%) 100% 0% / 50% 45% no-repeat,
         linear-gradient(200deg, rgba(255,255,255,0.16), transparent 70%) 10% 60% / 60% 40% no-repeat;
     }
 
