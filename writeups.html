@@ -22,7 +22,7 @@
 
     body {
       min-height: 100vh;
-      overflow-y: auto
+      overflow-y: auto;
       background:
         radial-gradient(circle at 50% 18%, rgba(255,255,255,0.07), transparent 18%),
         radial-gradient(circle at 20% 80%, rgba(255,255,255,0.03), transparent 24%),
@@ -76,9 +76,9 @@
       position: relative;
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 32px;
+      padding: 120px 32px 32px;
     }
 
     .panel {
@@ -241,6 +241,10 @@
     }
 
     @media (max-width: 760px) {
+      .frame {
+        padding: 96px 20px 20px;
+      }
+
       .panel {
         min-height: 82vh;
         border-radius: 18px;
