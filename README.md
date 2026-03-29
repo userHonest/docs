@@ -1,2 +1,2 @@
 # docs
-Repository containing research 
+https://userhonest.github.io/docs/
