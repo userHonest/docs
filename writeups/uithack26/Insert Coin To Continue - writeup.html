@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insert Coin Challenge Write-up</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Insert Coin Challenge Write-up</h1>
+      <p class="muted">
+        Challenge prompt:
+      </p>
+      <p class="quote">
+        "You've found an old arcade machine with a mysterious binary. It asks for a password, but maybe you don't need to know it... Sometimes the answer is hiding in plain sight."
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>Category</h3>
+          <p>Reverse Engineering / Basic Binary Inspection</p>
+        </div>
+        <div class="card">
+          <h3>Difficulty</h3>
+          <p>Beginner</p>
+        </div>
+        <div class="card">
+          <h3>Core Idea</h3>
+          <p>The flag is stored directly as a printable string inside the binary.</p>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. Initial Observation</h2>
+      <p>
+        The wording of the prompt is the main clue. It says the program asks for a password, but also hints that maybe the password is not necessary and that the answer may be "hiding in plain sight." In reversing challenges, that usually suggests:
+      </p>
+      <ul>
+        <li>The binary may contain useful embedded strings.</li>
+        <li>The password and flag might both be hardcoded.</li>
+        <li>A simple static inspection may be enough without disassembly or debugging.</li>
+      </ul>
+      <p>
+        The fastest first move is therefore to inspect the files and extract printable strings.
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Files Present</h2>
+      <p>
+        Listing the directory showed two main binaries:
+      </p>
+      <pre><code>strings
+strings-arm</code></pre>
+      <p class="small">
+        There were also Windows metadata files ending in <code>:Zone.Identifier</code>, which are not relevant to solving the challenge.
+      </p>
+    </section>
+
+    <section>
+      <h2>3. Identify the Binary Types</h2>
+      <p>
+        Running <code>file</code> revealed the platform differences:
+      </p>
+      <pre><code>strings:     ELF 64-bit LSB pie executable, x86-64, dynamically linked, not stripped
+strings-arm: Mach-O 64-bit arm64 executable</code></pre>
+      <p>
+        This tells us:
+      </p>
+      <ul>
+        <li><code>strings</code> is the Linux x86-64 binary.</li>
+        <li><code>strings-arm</code> is a macOS ARM binary.</li>
+        <li>Both likely implement the same challenge logic on different architectures.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4. Extract Printable Strings</h2>
+      <p>
+        The key step was to run the Unix <code>strings</code> utility against the binaries. For the Linux binary, the relevant output included:
+      </p>
+      <pre><code>arcade
+UiTHack26{str1ngs_4r3_fun}
+Usage: %s &lt;password&gt;
+*** ACCESS GRANTED ***
+FLAG: %s
+*** ACCESS DENIED ***
+HINT: Sometimes the answer is hiding in plain sight...</code></pre>
+      <p>
+        This already exposes almost everything:
+      </p>
+      <ul>
+        <li><code>arcade</code> appears to be the expected password.</li>
+        <li><code>UiTHack26{str1ngs_4r3_fun}</code> is clearly the flag format.</li>
+        <li>The hint strongly confirms that direct string extraction is the intended solution path.</li>
+      </ul>
+      <p>
+        The ARM binary contained the same meaningful strings, which further validated the conclusion.
+      </p>
+    </section>
+
+    <section>
+      <h2>5. Why This Works</h2>
+      <p>
+        Many beginner reversing challenges hardcode sensitive values in global variables or read-only data sections. If a binary is not packed, encrypted, or obfuscated, the <code>strings</code> utility can reveal human-readable data directly from sections such as:
+      </p>
+      <ul>
+        <li><code>.rodata</code> in ELF binaries</li>
+        <li><code>__cstring</code> in Mach-O binaries</li>
+      </ul>
+      <p>
+        Since this executable was not stripped in a way that removed string literals, both the password and the flag were visible without any need for:
+      </p>
+      <ul>
+        <li>disassembly</li>
+        <li>debugging</li>
+        <li>patching</li>
+        <li>brute force</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. Runtime Verification</h2>
+      <p>
+        To confirm the finding, the Linux binary was executed with the discovered password. The original file did not have execute permission, so a copy was placed in <code>/tmp</code>, marked executable, and run:
+      </p>
+      <pre><code>cp strings /tmp/strings
+chmod +x /tmp/strings
+/tmp/strings arcade</code></pre>
+      <p>
+        Program output:
+      </p>
+      <pre><code>*** ACCESS GRANTED ***
+FLAG: UiTHack26{str1ngs_4r3_fun}</code></pre>
+      <p>
+        This confirms both the password and the extracted flag.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Final Answer</h2>
+      <p>
+        The challenge can be solved entirely through static inspection of embedded strings.
+      </p>
+      <div class="flag">UiTHack26{str1ngs_4r3_fun}</div>
+    </section>
+
+    <section>
+      <h2>8. Short Conclusion</h2>
+      <p>
+        The intended lesson is straightforward: always check the easy path first. When a challenge hints that something is visible "in plain sight," extracting strings from the binary is often enough to recover secrets that were carelessly embedded by the developer.
+      </p>
+      <p>
+        In this case, the executable exposed both the password <code>arcade</code> and the flag <code>UiTHack26{str1ngs_4r3_fun}</code> directly in its printable data.
+      </p>
+    </section>
+  </div>
+</body>
+</html>

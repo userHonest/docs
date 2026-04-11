@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UiTHack PNG Challenge Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p><strong>Challenge Writeup</strong></p>
+      <h1>Recovering the Flag From a Broken PNG</h1>
+      <p class="lede">
+        This challenge looked simple at first glance: there was a single PNG file and the task was to recover a flag in the format <code>UiTHack26{...}</code>. The catch was that the PNG was malformed, so ordinary image viewers and straightforward string searches were not enough to solve it cleanly.
+      </p>
+      <div class="flag"><strong>Recovered flag:</strong> <code>UiTHack26{wh4t_d0_pn6_574nd_f0r_4nyw4y5}</code></div>
+      <div class="meta">
+        <div><strong>File analyzed</strong><br><code>challenge.png</code></div>
+        <div><strong>Core issue</strong><br>PNG header claimed <code>0 x 0</code> dimensions</div>
+        <div><strong>Actual approach</strong><br>Parse chunks, decompress <code>IDAT</code>, reconstruct pixels manually</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Initial Recon</h2>
+      <p>
+        The workspace contained one obvious target: <code>challenge.png</code>. There was also a copy with a token in the filename and a Windows <code>Zone.Identifier</code> sidecar, but nothing else suggested an alternate path to the flag.
+      </p>
+      <p>
+        The first useful check was the file type:
+      </p>
+      <pre><code>file challenge.png
+challenge.png: PNG image data, 0 x 0, 8-bit/color RGB, non-interlaced</code></pre>
+      <p>
+        A PNG reporting width and height as zero is immediately suspicious. It means the container is structurally recognizable as a PNG, but the header is not valid for a normal image. That strongly suggests one of two things:
+      </p>
+      <ol>
+        <li>The file is intentionally corrupted to prevent direct viewing.</li>
+        <li>The image data is still present and can be recovered by parsing the file at a lower level.</li>
+      </ol>
+      <p>
+        Running <code>strings</code> did not reveal the flag directly. That was expected. If the flag were hidden as plain text in metadata, the challenge would have ended there. Instead, the file mostly contained compressed image data.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Understanding the PNG Structure</h2>
+      <p>
+        PNG files are chunk-based. They begin with a fixed signature, then a series of chunks such as:
+      </p>
+      <ul>
+        <li><code>IHDR</code> for image width, height, bit depth, and color type</li>
+        <li><code>IDAT</code> for compressed pixel data</li>
+        <li><code>IEND</code> to terminate the file</li>
+      </ul>
+      <p>
+        A quick hex dump confirmed that the file really was a PNG and that the width and height fields in <code>IHDR</code> had both been set to zero:
+      </p>
+      <pre><code>00000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52
+00000010: 00 00 00 00 00 00 00 00 08 02 00 00 00 3e 0f 5f
+00000020: ad 00 00 80 00 49 44 41 54 78 da ...</code></pre>
+      <p>
+        That told us something important: the image payload had not been removed. It started immediately after the header in a large set of <code>IDAT</code> chunks. So the challenge was not about metadata extraction. It was about recovering the real image from a deliberately invalid header.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Extracting the Raw Image Stream</h2>
+      <p>
+        The next step was to parse all PNG chunks, concatenate every <code>IDAT</code> payload, and decompress the result with zlib. A short Python script was enough for that:
+      </p>
+      <pre><code>import struct, zlib
+
+b = open("challenge.png", "rb").read()
+o = 8
+chunks = []
+
+while o &lt; len(b):
+    length = struct.unpack("&gt;I", b[o:o+4])[0]
+    o += 4
+    chunk_type = b[o:o+4]
+    o += 4
+    data = b[o:o+length]
+    o += length
+    crc = b[o:o+4]
+    o += 4
+    chunks.append((chunk_type, data))
+    if chunk_type == b"IEND":
+        break
+
+idat = b"".join(data for chunk_type, data in chunks if chunk_type == b"IDAT")
+raw = zlib.decompress(idat)
+print(len(raw))</code></pre>
+      <p>
+        The decompressed stream length was <code>3240900</code> bytes. That is far too structured to be random. For an 8-bit RGB PNG, each row normally has:
+      </p>
+      <ul>
+        <li>1 filter byte</li>
+        <li><code>width * 3</code> bytes of RGB pixel data</li>
+      </ul>
+      <p>
+        That means the raw size must satisfy:
+      </p>
+      <pre><code>raw_size = height * (1 + width * 3)</code></pre>
+      <p>
+        Solving for plausible width and height pairs yielded a handful of mathematical candidates, but only one realistic image resolution:
+      </p>
+      <pre><code>1200 x 900</code></pre>
+      <p>
+        That was a strong signal that the original image dimensions had likely been <code>1200x900</code> before the header was sabotaged.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Reconstructing the Image Properly</h2>
+      <p>
+        At that point the file still could not be opened directly, because simply changing width and height is not enough. PNG scanlines are filtered before compression, and the decoder must reverse those filters row by row.
+      </p>
+      <p>
+        The decompressed stream showed that the image used multiple PNG filter types, including:
+      </p>
+      <ul>
+        <li><code>1</code> (Sub)</li>
+        <li><code>2</code> (Up)</li>
+        <li><code>3</code> (Average)</li>
+        <li><code>4</code> (Paeth)</li>
+      </ul>
+      <p>
+        Because of that, a correct reconstruction needed a manual decoder that reverses each filter using the previous row and neighboring pixels. The logic looked like this:
+      </p>
+      <pre><code>def paeth(a, b, c):
+    p = a + b - c
+    pa = abs(p - a)
+    pb = abs(p - b)
+    pc = abs(p - c)
+    if pa &lt;= pb and pa &lt;= pc:
+        return a
+    if pb &lt;= pc:
+        return b
+    return c
+
+# For each row:
+# read filter byte
+# unfilter row according to PNG rules
+# append final RGB bytes</code></pre>
+      <p>
+        Once the filters were reversed and the RGB bytes were assembled into a new image buffer, the reconstructed output became a valid PNG again. The recovered image showed a man in a suit holding a glowing screen, with faint green text repeated across the entire image.
+      </p>
+      <div class="note">
+        The visible text was not hidden in file metadata. It was embedded visually inside the pixel content, and the corrupted header was the mechanism used to stop normal viewers from displaying it.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Reading the Flag</h2>
+      <p>
+        After reconstruction, the repeated green overlay was readable by eye, and OCR confirmed the full string. Because the text repeated many times over the image, some OCR attempts produced small casing and spacing mistakes, but the intended flag was still clear.
+      </p>
+      <pre><code>UiTHack26{wh4t_d0_pn6_574nd_f0r_4nyw4y5}</code></pre>
+      <p>
+        The joke in the flag is the use of <code>pn6</code> and leetspeak substitutions, echoing the question “what do PNG stand for anyways”.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Why This Worked</h2>
+      <p>
+        The challenge relied on a common CTF pattern: break just enough of the file format to defeat standard tools while leaving the interesting data intact. In this case:
+      </p>
+      <ul>
+        <li>The PNG signature remained valid.</li>
+        <li>The <code>IDAT</code> stream remained intact and decompressible.</li>
+        <li>Only the image dimensions were corrupted in <code>IHDR</code>.</li>
+      </ul>
+      <p>
+        That makes the challenge approachable if you know how PNG files are structured. Once the raw image stream is extracted, the rest is a matter of finding the correct dimensions and applying the PNG filter rules correctly.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Short Solve Path</h2>
+      <ol>
+        <li>Identify that <code>challenge.png</code> is malformed because it reports <code>0 x 0</code> dimensions.</li>
+        <li>Parse all PNG chunks and concatenate the <code>IDAT</code> data.</li>
+        <li>Decompress the combined <code>IDAT</code> stream with zlib.</li>
+        <li>Infer plausible dimensions from the decompressed size.</li>
+        <li>Choose the realistic candidate <code>1200x900</code>.</li>
+        <li>Reverse the PNG scanline filters for every row.</li>
+        <li>Save the recovered pixel buffer as a new valid image.</li>
+        <li>Read the repeated text overlay and extract the flag.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Final Answer</h2>
+      <p>
+        The flag is:
+      </p>
+      <pre><code>UiTHack26{wh4t_d0_pn6_574nd_f0r_4nyw4y5}</code></pre>
+    </section>
+
+    <p class="footer">
+      This writeup was generated as a standalone HTML document so it can be opened locally in any browser without additional assets or dependencies.
+    </p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnakePy Challenge Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">UiTHack26 Reverse / Stego Writeup</div>
+      <h1>SnakePy: Pulling a Flag Out of Neural Network Weights</h1>
+      <p class="lede">
+        This challenge ships with a small Snake game and a PyTorch checkpoint. The key idea is simple: the model weights are being used as a hiding place, and the flag sits in the raw bits of one tensor rather than in the Python code or readable metadata.
+      </p>
+      <div class="flag">
+        <strong>Recovered flag:</strong>
+        <code>UiTHack26{7h3_5n4k3_m1gh7_n33d_4_l4rg3r_m0d3l}</code>
+      </div>
+      <div class="meta">
+        <div class="box"><strong>Challenge files</strong><code>snAIke.py</code>, <code>model.pt</code></div>
+        <div class="box"><strong>Core idea</strong>Model checkpoint steganography in float32 weight bits</div>
+        <div class="box"><strong>Useful breakthrough</strong>Treat a tensor as raw <code>uint32</code>, not as numeric floats</div>
+        <div class="box"><strong>Winning tensor</strong><code>conv.2.weight</code> stored as <code>model/data/2</code></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="toc">Table of Contents</h2>
+      <ol class="toc">
+        <li><a href="#setup">Initial Setup and First Impressions</a></li>
+        <li><a href="#script">Reading the Snake Code</a></li>
+        <li><a href="#checkpoint">Inspecting the Checkpoint Format</a></li>
+        <li><a href="#mapping">Mapping Archive Blobs to Model Layers</a></li>
+        <li><a href="#hypotheses">What Might Be Hidden and Where</a></li>
+        <li><a href="#bit-level">Bit-Level Extraction of the Payload</a></li>
+        <li><a href="#solver">Clean Solver Script</a></li>
+        <li><a href="#lessons">Takeaways</a></li>
+      </ol>
+    </section>
+
+    <section class="card" id="setup">
+      <h2>Initial Setup and First Impressions</h2>
+      <p>
+        The challenge directory is small, which makes the target clear. The only files that matter are:
+      </p>
+      <pre><code>model.pt
+model.pt:Zone.Identifier
+snAIke.py
+snAIke.py:Zone.Identifier</code></pre>
+      <p>
+        The Windows <code>Zone.Identifier</code> files are irrelevant. The challenge description already points at the weights, so the natural plan is to inspect the model file instead of overthinking the game logic.
+      </p>
+      <p>
+        The first question is whether the checkpoint leaks anything obvious. Even if it does not, PyTorch checkpoints still expose raw tensor storage, so the right workflow is:
+      </p>
+      <ul>
+        <li>Read the model definition.</li>
+        <li>Work out how the checkpoint is structured.</li>
+        <li>Look at the raw bytes, not just the interpreted numbers.</li>
+      </ul>
+      <div class="note">
+        The model only needs to look believable. It does not need to be a clean training artifact.
+      </div>
+    </section>
+
+    <section class="card" id="script">
+      <h2>Reading the Snake Code</h2>
+      <p>
+        The Python file is short and gives the exact network architecture. That tells us what tensor shapes to expect in the checkpoint.
+      </p>
+      <pre><code>class SnakeCNN(nn.Module):
+    def __init__(self, h=GRID_H, w=GRID_W):
+        super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+        )
+        with torch.no_grad():
+            dummy    = torch.zeros(1, 1, h, w)
+            conv_out = self.conv(dummy).flatten(1).shape[1]
+        self.head = nn.Sequential(
+            nn.Linear(conv_out, 256),
+            nn.ReLU(),
+            nn.Linear(256, 4),
+        )</code></pre>
+      <p>
+        From this alone we can derive the expected parameter layout:
+      </p>
+      <ul>
+        <li><code>conv.0.weight</code>: <code>32 x 1 x 3 x 3 = 288</code> float32 values</li>
+        <li><code>conv.0.bias</code>: <code>32</code> values</li>
+        <li><code>conv.2.weight</code>: <code>64 x 32 x 3 x 3 = 18432</code> values</li>
+        <li><code>conv.2.bias</code>: <code>64</code> values</li>
+        <li><code>conv.4.weight</code>: <code>64 x 64 x 3 x 3 = 36864</code> values</li>
+        <li><code>conv.4.bias</code>: <code>64</code> values</li>
+        <li><code>head.0.weight</code>: <code>256 x 2304 = 589824</code> values</li>
+        <li><code>head.0.bias</code>: <code>256</code> values</li>
+        <li><code>head.2.weight</code>: <code>4 x 256 = 1024</code> values</li>
+        <li><code>head.2.bias</code>: <code>4</code> values</li>
+      </ul>
+      <p>
+        The game loads the checkpoint using:
+      </p>
+      <pre><code>ckpt = torch.load(args.model, map_location=device, weights_only=True)
+if isinstance(ckpt, dict) and "weights" in ckpt:
+    model.load_state_dict(ckpt["weights"])
+else:
+    model.load_state_dict(ckpt)</code></pre>
+      <p>
+        This suggests the checkpoint is a simple dictionary with a state dict under <code>"weights"</code>, which makes low-level inspection straightforward.
+      </p>
+    </section>
+
+    <section class="card" id="checkpoint">
+      <h2>Inspecting the Checkpoint Format</h2>
+      <p>
+        Rather than loading the file with PyTorch, I inspected it as a zip archive. Modern PyTorch checkpoints often store pickle metadata plus raw tensor blobs this way.
+      </p>
+      <pre><code>$ file model.pt
+model.pt: Zip archive data
+
+$ unzip -l model.pt
+Archive:  model.pt
+  Length      Name
+  -------     ----------------------------
+     1281     model/data.pkl
+        1     model/.format_version
+        2     model/.storage_alignment
+        6     model/byteorder
+     1152     model/data/0
+      128     model/data/1
+    73728     model/data/2
+      256     model/data/3
+   147456     model/data/4
+      256     model/data/5
+  2359296     model/data/6
+     1024     model/data/7
+     4096     model/data/8
+       16     model/data/9
+        2     model/version
+       40     model/.data/serialization_id</code></pre>
+      <p>
+        The file sizes line up exactly with float32 tensors:
+      </p>
+      <ul>
+        <li><code>1152</code> bytes = <code>288</code> float32 values</li>
+        <li><code>73728</code> bytes = <code>18432</code> float32 values</li>
+        <li><code>2359296</code> bytes = <code>589824</code> float32 values</li>
+      </ul>
+      <p>
+        There is no extra hidden file. If anything is embedded, it is inside tensor storage.
+      </p>
+    </section>
+
+    <section class="card" id="mapping">
+      <h2>Mapping Archive Blobs to Model Layers</h2>
+      <p>
+        Next, we need to map each raw storage blob to its named layer. That information lives in <code>model/data.pkl</code>, and a pickle disassembly is enough.
+      </p>
+      <pre><code>$ python -c 'import zipfile, pickletools; z=zipfile.ZipFile("model.pt"); pickletools.dis(z.read("model/data.pkl"))'</code></pre>
+      <p>
+        The disassembly shows an <code>OrderedDict</code> called <code>weights</code> with entries like:
+      </p>
+      <pre><code>'conv.0.weight' -&gt; storage '0'
+'conv.0.bias'   -&gt; storage '1'
+'conv.2.weight' -&gt; storage '2'
+'conv.2.bias'   -&gt; storage '3'
+'conv.4.weight' -&gt; storage '4'
+'conv.4.bias'   -&gt; storage '5'
+'head.0.weight' -&gt; storage '6'
+'head.0.bias'   -&gt; storage '7'
+'head.2.weight' -&gt; storage '8'
+'head.2.bias'   -&gt; storage '9'</code></pre>
+      <p>
+        It also shows two integer fields:
+      </p>
+      <pre><code>'steps'   -&gt; 8131971
+'episode' -&gt; 11865277</code></pre>
+      <p>
+        Those fields are not interesting. The payload is elsewhere.
+      </p>
+      <div class="success">
+        At this point, every further check can be targeted instead of blind.
+      </div>
+    </section>
+
+    <section class="card" id="hypotheses">
+      <h2>What Might Be Hidden and Where</h2>
+      <p>
+        Once the tensors are mapped, the plausible hiding strategies are:
+      </p>
+      <ol>
+        <li>Store the flag directly in spare metadata or training fields.</li>
+        <li>Encode the flag in the decimal values of some weights.</li>
+        <li>Use low-order bits of the float32 representation as a covert channel.</li>
+        <li>Arrange a tensor so that, when reshaped as an image, it reveals a QR code or text.</li>
+      </ol>
+      <p>
+        The metadata route did not expose anything useful, so the likely answer was hidden in the tensor values or their bit patterns.
+      </p>
+      <p>
+        Float32 values are stored as raw 32-bit words, and tiny changes in the least significant bits usually do not affect model behavior much. That makes LSBs a natural hiding place.
+      </p>
+      <p>
+        That is enough to justify testing bit extraction directly.
+      </p>
+    </section>
+
+    <section class="card" id="bit-level">
+      <h2>Bit-Level Extraction of the Payload</h2>
+      <p>
+        The decisive step is to stop treating the storage as floats and read it as unsigned 32-bit integers instead. If one bit is hidden in each weight word, extraction is simple:
+      </p>
+      <ol>
+        <li>Read a tensor blob as little-endian <code>uint32</code>.</li>
+        <li>Take the least significant bit of each word.</li>
+        <li>Pack those bits into bytes.</li>
+        <li>Interpret the result as ASCII.</li>
+      </ol>
+      <p>
+        I tested this on each tensor. The immediate hit came from <code>model/data/2</code>, which maps to <code>conv.2.weight</code>.
+      </p>
+      <pre><code>import zipfile
+import numpy as np
+
+zf = zipfile.ZipFile("model.pt")
+arr = np.frombuffer(zf.read("model/data/2"), dtype="&lt;u4")
+bits = ((arr &gt;&gt; 0) &amp; 1).astype(np.uint8)
+msg = np.packbits(bits[:(len(bits) // 8) * 8], bitorder="big").tobytes()
+print(msg[:80])</code></pre>
+      <p>
+        The beginning of the output was:
+      </p>
+      <pre><code>b'UiTHack26{7h3_5n4k3_m1gh7_n33d_4_l4rg3r_m0d3l}\x00...'</code></pre>
+      <p>
+        That is the full flag, followed by a null terminator.
+      </p>
+      <p>
+        This works because <code>conv.2.weight</code> has <code>18432</code> float32 values, which gives <code>2304</code> bytes of capacity at one bit per weight.
+      </p>
+      <h3>Why big-endian bit packing matters</h3>
+      <p>
+        Bit order matters too. Using <code>numpy.packbits(..., bitorder="big")</code> produces the readable ASCII stream here.
+      </p>
+      <p>
+        So the exact decoding rule is:
+      </p>
+      <pre><code>one bit from each 32-bit weight word
+read in storage order
+pack into bytes most-significant-bit first</code></pre>
+      <h3>Why this is a realistic hiding method</h3>
+      <p>
+        Flipping the least significant bit of a float32 rarely changes the value enough to matter for a simple model like this. That makes a checkpoint a convenient steganographic container:
+      </p>
+      <ul>
+        <li>large capacity</li>
+        <li>high entropy appearance</li>
+        <li>small perturbations tolerated by the model</li>
+        <li>most solvers will initially trust the checkpoint as purely numeric data</li>
+      </ul>
+    </section>
+
+    <section class="card" id="solver">
+      <h2>Clean Solver Script</h2>
+      <p>
+        Here is a minimal solver that extracts the flag without PyTorch:
+      </p>
+      <pre><code>import zipfile
+import numpy as np
+
+with zipfile.ZipFile("model.pt") as zf:
+    data = zf.read("model/data/2")
+
+arr = np.frombuffer(data, dtype="&lt;u4")
+bits = ((arr &gt;&gt; 0) &amp; 1).astype(np.uint8)
+payload = np.packbits(bits[:(len(bits) // 8) * 8], bitorder="big").tobytes()
+flag = payload.split(b"\x00", 1)[0].decode("ascii")
+
+print(flag)</code></pre>
+      <p>
+        Running that prints:
+      </p>
+      <pre><code>UiTHack26{7h3_5n4k3_m1gh7_n33d_4_l4rg3r_m0d3l}</code></pre>
+      <h3>More defensive version</h3>
+      <p>
+        A more general version can brute force all tensor blobs, bit positions, and bit orders, then scan for a flag pattern.
+      </p>
+      <pre><code>import re
+import zipfile
+import numpy as np
+
+with zipfile.ZipFile("model.pt") as zf:
+    for name in zf.namelist():
+        if not name.startswith("model/data/"):
+            continue
+        arr = np.frombuffer(zf.read(name), dtype="&lt;u4")
+        for bit in range(32):
+            bits = ((arr &gt;&gt; bit) &amp; 1).astype(np.uint8)
+            n = (len(bits) // 8) * 8
+            for order in ("big", "little"):
+                data = np.packbits(bits[:n], bitorder=order).tobytes()
+                m = re.search(rb"UiTHack26\{[^}]+\}", data)
+                if m:
+                    print(name, bit, order, m.group().decode())
+</code></pre>
+      <p>
+        That more generic scanner lands on <code>model/data/2</code>, bit <code>0</code>, order <code>big</code>.
+      </p>
+    </section>
+
+    <section class="card" id="lessons">
+      <h2>Takeaways</h2>
+      <p>
+        This is a good reminder that model files are arbitrary binary containers, not inherently trustworthy numeric artifacts.
+      </p>
+      <ul>
+        <li>Neural network weights can carry hidden data without breaking the model.</li>
+        <li>PyTorch checkpoints are often easy to inspect with generic archive and pickle tooling.</li>
+        <li>When the challenge text points at the weights, believe it.</li>
+        <li>Low-order bits are the first place to look when the visible values seem legitimate.</li>
+      </ul>
+      <p>
+        In practical reversing terms, the solve flow was:
+      </p>
+      <ol>
+        <li>Read the model architecture from the Python source.</li>
+        <li>Inspect the checkpoint as a zip archive.</li>
+        <li>Map storage blobs to named tensors through <code>data.pkl</code>.</li>
+        <li>Test raw-bit extraction on the weight blobs.</li>
+        <li>Recover the flag from the LSB stream of <code>conv.2.weight</code>.</li>
+      </ol>
+      <div class="success">
+        Final flag: <code>UiTHack26{7h3_5n4k3_m1gh7_n33d_4_l4rg3r_m0d3l}</code>
+      </div>
+    </section>
+
+    <p class="footer">
+      Writeup generated for the local challenge directory <code>snakepy</code>. The page is self-contained and can be opened directly in a browser.
+    </p>
+  </main>
+</body>
+</html>

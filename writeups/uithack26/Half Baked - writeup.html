@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Half Baked Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main>
+    <header>
+      <p class="small">UiTHack26 Crypto Writeup</p>
+      <h1>Half Baked Writeup</h1>
+      <p class="lede">
+        We are given a custom password hashing program, a leaked password file, a decryptor, and an
+        encrypted movie script. The intended break is that the hash only preserves the low nibble of
+        each of the first eight password characters, which makes the stored value reversible enough
+        to recover a working password for the decryptor.
+      </p>
+      <div class="meta">
+        <div><strong>Target account</strong><br><code>sysadmin</code> / P. Hansen</div>
+        <div><strong>Bug</strong><br>Only 4 bits per character survive</div>
+        <div><strong>Exploit</strong><br>Recovered password material decrypts the file</div>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Initial Recon</h2>
+      <ul>
+        <li><code>crypt.pas</code> implements the custom password hashing routine.</li>
+        <li><code>passwd.bak</code> contains stored password hashes.</li>
+        <li><code>decrypt</code> is the binary used to unlock the movie file.</li>
+        <li><code>movie.encrypted</code> is the ciphertext we need to recover.</li>
+      </ul>
+      <p>The account that matters is easy to spot in the backup:</p>
+      <pre><code>sysadmin:lsf306ed84e8bfd4c1:42:42:P.Hansen:/home/sysadmin:/bin/sh</code></pre>
+      <p>
+        The hash field is <code>lsf306ed84e8bfd4c1</code>, so the two-character salt is
+        <code>ls</code> and the eight encoded bytes are <code>f3 06 ed 84 e8 bf d4 c1</code>.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Finding The Bug</h2>
+      <p>
+        The important bug is in <code>Transform</code>. Every password character is reduced to its
+        low nibble before any mixing happens.
+      </p>
+      <pre><code>function Transform(c: char): byte;
+var
+  v : byte;
+begin
+  v := ord(c);
+  v := v AND (v XOR (v AND $F0));
+  Transform := v AND $0F;
+end;</code></pre>
+      <p>
+        This destroys most of the entropy immediately. The code also uses only the first
+        <code>MAX_PW = 8</code> characters, so the value that actually gets hashed is just eight
+        4-bit nibbles. The rest of the algorithm is only XOR, byte addition, and a small
+        permutation, so reversing it is practical.
+      </p>
+      <p>
+        So the custom hash is not acting like a one-way function here. It is closer to a reversible
+        encoding of eight nibbles plus some salt-dependent scrambling.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Reversing The Hash</h2>
+      <p>
+        Starting from the stored bytes <code>f3 06 ed 84 e8 bf d4 c1</code>, we reverse the pipeline
+        in the opposite order: undo the final nibble-XOR pass, undo the permutation in
+        <code>Scatter</code>, then undo the salt-dependent recurrence in <code>Diffuse</code>.
+      </p>
+
+      <h3>1. Undo The Final Pass</h3>
+      <p>
+        The last loop in <code>Scatter</code> XORs each byte with the low nibble of the next byte.
+        Since each byte only depends on the byte to its right, it can be inverted by walking
+        backward:
+      </p>
+      <pre><code>for i = 6 down to 0:
+    key[i] = key[i] XOR (key[i + 1] AND 0x0f)</code></pre>
+      <p>This gives the state before the final pass:</p>
+      <pre><code>fe 0d eb 86 e2 ba d5 c1</code></pre>
+
+      <h3>2. Undo The Swap/XOR Mixing</h3>
+      <p>
+        The first part of <code>Scatter</code> only touches positions <code>0..2</code> and their
+        mirrored bytes, while indices <code>3</code> and <code>4</code> stay visible. That makes the
+        permutation easy to solve directly. Reversing it produces the state leaving
+        <code>Diffuse</code>:
+      </p>
+      <pre><code>23 37 58 86 e2 6d 55 c9</code></pre>
+
+      <h3>3. Undo The Salt Mixing</h3>
+      <p>
+        The salt alphabet is:
+      </p>
+      <pre><code>./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</code></pre>
+      <p>
+        For <code>ls</code>, the character positions are <code>49</code> and <code>56</code>. That
+        gives:
+      </p>
+      <pre><code>saltval = (56 &lt;&lt; 6) | 49 = 3633
+slo = 0x31
+shi = 0x0e</code></pre>
+      <p>
+        Undoing <code>Diffuse</code> yields the original packed block:
+      </p>
+      <pre><code>12 39 04 14 00 00 00 00</code></pre>
+      <p>
+        The first four bytes contain the eight recovered password nibbles:
+      </p>
+      <pre><code>12 39 04 14  -&gt;  1 2 3 9 0 4 1 4</code></pre>
+      <p>
+        A convenient representative password is:
+      </p>
+      <pre><code>12390414</code></pre>
+      <p class="small">
+        The original text password is not unique. Any eight-character string with the same low
+        nibble pattern would produce the same hash.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Breaking The Decryptor</h2>
+      <p>
+        The decryptor uses the same reduced password material. For the representative password
+        <code>12390414</code>, the effective key bytes are:
+      </p>
+      <pre><code>12 39 04 14 00 00 00 00</code></pre>
+      <p>
+        The file is then decrypted with a chained XOR keystream. In simplified form:
+      </p>
+      <pre><code>prev = key[0]
+for i in range(len(ciphertext)):
+    t = prev ^ key[i % 8] ^ (i &amp; 0xff)
+    prev = t
+    plaintext[i] = ciphertext[i] ^ t</code></pre>
+      <p>
+        Once the recovered password is used, <code>movie.encrypted</code> decrypts into a readable
+        plaintext screenplay.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Solve Summary</h2>
+      <ol>
+        <li>Read <code>crypt.pas</code> and notice that only the low nibble of each of the first eight characters matters.</li>
+        <li>Extract Hansen's hash from <code>passwd.bak</code>: <code>lsf306ed84e8bfd4c1</code>.</li>
+        <li>Reverse the hash to recover the nibble sequence <code>1 2 3 9 0 4 1 4</code>.</li>
+        <li>Build a representative password such as <code>12390414</code>.</li>
+        <li>Use the same reduced key material against the decryptor or reproduce its XOR loop.</li>
+        <li>Search the decrypted script for the real flag string.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Reference Script</h2>
+      <p>
+        The script below performs the full solve locally: reverse the hash, derive a representative
+        password, decrypt the movie file, and extract the flag.
+      </p>
+      <pre><code class="language-js">const fs = require('fs');
+
+const salt = 'ls';
+const hex = 'f306ed84e8bfd4c1';
+const SALT_CHARS = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+function reverseHash(salt, hex) {
+  let key = Array.from({ length: 8 }, (_, i) =>
+    parseInt(hex.slice(i * 2, i * 2 + 2), 16)
+  );
+
+  for (let i = 6; i >= 0; i--) {
+    key[i] ^= (key[i + 1] & 0x0f);
+  }
+
+  let d = new Array(8);
+  d[3] = key[3];
+  d[4] = key[4];
+  d[0] = key[7] ^ d[4];
+  d[1] = key[6] ^ d[4];
+  d[2] = key[5] ^ d[4];
+  d[7] = key[0] ^ d[1];
+  d[6] = key[1] ^ d[2];
+  d[5] = key[2] ^ d[3];
+
+  const pos1 = SALT_CHARS.indexOf(salt[0]);
+  const pos2 = SALT_CHARS.indexOf(salt[1]);
+  const saltval = (pos2 << 6) | pos1;
+  const slo = saltval & 0xff;
+  const shi = (saltval >> 8) & 0x0f;
+
+  let packed = new Array(8);
+  packed[0] = d[0] ^ slo;
+  packed[1] = d[1] ^ shi;
+  for (let i = 2; i < 8; i++) {
+    packed[i] = d[i] ^ ((d[i - 2] + d[i - 1] + i) & 0xff);
+  }
+
+  let nibbles = [];
+  for (let i = 0; i < 4; i++) {
+    nibbles.push((packed[i] >> 4) & 0x0f, packed[i] & 0x0f);
+  }
+
+  return { packed, nibbles };
+}
+
+function representativePassword(nibbles) {
+  return nibbles.map(n => n.toString(16)).join('');
+}
+
+function decryptFile(path, packed) {
+  const ciphertext = fs.readFileSync(path);
+  let prev = packed[0];
+  let plaintext = Buffer.alloc(ciphertext.length);
+
+  for (let i = 0; i < ciphertext.length; i++) {
+    const t = (prev ^ packed[i % 8] ^ (i & 0xff)) & 0xff;
+    prev = t;
+    plaintext[i] = ciphertext[i] ^ t;
+  }
+
+  return plaintext;
+}
+
+const { packed, nibbles } = reverseHash(salt, hex);
+const password = representativePassword(nibbles);
+const plaintext = decryptFile('half_baked/challenge/movie.encrypted', packed);
+const text = plaintext.toString('utf8');
+const realFlag = (text.match(/UiTHack26\{[^}\n]+\}/) || [])[0];
+
+console.log('nibbles:', nibbles.join(' '));
+console.log('password:', password);
+console.log('packed:', packed.map(x => x.toString(16).padStart(2, '0')).join(' '));
+console.log('flag:', realFlag);</code></pre>
+      <p>Expected output:</p>
+      <pre><code>nibbles: 1 2 3 9 0 4 1 4
+password: 12390414
+packed: 12 39 04 14 00 00 00 00
+flag: UiTHack26{3t_n1bbl3_h0m3_y0u_0nly_n33d_th3_f1rst_31ght}</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>Flag Extraction</h2>
+      <p>
+        After decryption, the movie script contains several brace-delimited strings. The real flag
+        is the one with the challenge prefix:
+      </p>
+      <p class="flag">UiTHack26{3t_n1bbl3_h0m3_y0u_0nly_n33d_th3_f1rst_31ght}</p>
+    </section>
+
+    <section class="card">
+      <h2>Takeaway</h2>
+      <p>
+        The whole challenge hinges on one bad design choice: only the low nibble of the first eight
+        password characters is preserved. That collapses the password space, makes the stored hash
+        reversible enough to recover working password material, and breaks the decryptor as soon as
+        the same secret is reused there.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Final Answer</h2>
+      <p><strong>Recovered effective password:</strong> <code>12390414</code></p>
+      <p><strong>Flag:</strong> <span class="flag">UiTHack26{3t_n1bbl3_h0m3_y0u_0nly_n33d_th3_f1rst_31ght}</span></p>
+    </section>
+  </main>
+</body>
+</html>

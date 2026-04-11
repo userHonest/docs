@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base 179 Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Base 179 Challenge Writeup</h1>
+      <p class="lead">
+        A full writeup for the challenge prompt: <em>I've invented a new encoding algorithm: base 179! Can you decode this message?</em>
+        The core trick is that the challenge does not actually start with a real “base 179” encoding. Instead, it uses a layered encoding chain
+        and relies on the fake label to push solvers toward the wrong decoding strategy.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <strong>Challenge Type</strong>
+          Multi-stage encoding / decoding
+        </div>
+        <div class="card">
+          <strong>Main Input</strong>
+          <code>GFQTKTLXMZLXMUTQHBITS2LQN5UWQVKSJ5IEQUTRNJCHQZKUNUZVUSSTGVCFGZ3EIM4FCQ32LA3TKZKIMNDE2T3QMVVVGMJSI4======</code>
+        </div>
+        <div class="card">
+          <strong>Final Flag</strong>
+          <span class="flag">UiTHack{3nc0d1ng_15_0v3r_9_7h0uz4nd}</span>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>1. Reading the Hint Correctly</h2>
+      <p>
+        The challenge says:
+      </p>
+      <pre><code>I've invented a new encoding algorithm: base 179! Can you decode this message?</code></pre>
+      <p>
+        That statement is the entire trap. The natural reaction is to try to interpret the ciphertext directly as some unfamiliar
+        positional number system with radix 179. But the given string already contains strong evidence that this is not the right first step.
+      </p>
+      <p>
+        The ciphertext is:
+      </p>
+      <pre><code>GFQTKTLXMZLXMUTQHBITS2LQN5UWQVKSJ5IEQUTRNJCHQZKUNUZVUSSTGVCFGZ3EIM4FCQ32LA3TKZKIMNDE2T3QMVVVGMJSI4======</code></pre>
+      <p>
+        There are two immediate clues:
+      </p>
+      <ol>
+        <li>It only uses characters from the Base32 alphabet.</li>
+        <li>It ends in <code>======</code>, which is classic Base32 padding.</li>
+      </ol>
+      <p>
+        So before trying anything exotic, the correct move is to test the obvious standard encodings. That alone unwraps the first layer.
+      </p>
+      <div class="note">
+        In encoding challenges, the “special new algorithm” is often not the outermost layer. If the ciphertext visibly matches a standard format,
+        decode that first.
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Stage One: Base32</h2>
+      <p>
+        Decoding the original string as Base32 gives:
+      </p>
+      <pre><code>1a5MwfWvRp8Q9ipoihUROPHRqjDxeTm3ZJS5DSgdC8QCzX75eHcFMOpekS12G</code></pre>
+      <p>
+        This output is still not the flag, but it is clearly printable and structured. That usually means there is another text-oriented
+        encoding stage inside it.
+      </p>
+      <h3>Python Check</h3>
+      <pre><code class="language-python">import base64
+
+cipher = "GFQTKTLXMZLXMUTQHBITS2LQN5UWQVKSJ5IEQUTRNJCHQZKUNUZVUSSTGVCFGZ3EIM4FCQ32LA3TKZKIMNDE2T3QMVVVGMJSI4======"
+stage1 = base64.b32decode(cipher).decode()
+print(stage1)</code></pre>
+      <p>
+        Output:
+      </p>
+      <pre><code>1a5MwfWvRp8Q9ipoihUROPHRqjDxeTm3ZJS5DSgdC8QCzX75eHcFMOpekS12G</code></pre>
+    </section>
+
+    <section>
+      <h2>3. Why Base179 Still Looks Wrong Here</h2>
+      <p>
+        At this point, the challenge hint starts to interfere with good judgment. A solver can spend a lot of time trying to force the stage-one
+        string into some hand-made base-179 interpretation:
+      </p>
+      <ul>
+        <li>treating ASCII bytes as digits in base 179</li>
+        <li>subtracting character offsets to make values fall into <code>0..178</code></li>
+        <li>trying big-endian and little-endian integer reconstruction</li>
+        <li>trying affine transforms or XOR/addition with <code>179</code></li>
+      </ul>
+      <p>
+        None of those paths gave a clean, trustworthy <code>UiTHack{...}</code> output. More importantly, the stage-one text still looks like a
+        plausible standard-base payload, which suggests we should continue peeling ordinary encodings instead of forcing the hint too early.
+      </p>
+      <p>
+        The next good heuristic is this: the stage-one output is entirely alphanumeric, so it is a valid candidate for Base62.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. Stage Two: Base62</h2>
+      <p>
+        The string:
+      </p>
+      <pre><code>1a5MwfWvRp8Q9ipoihUROPHRqjDxeTm3ZJS5DSgdC8QCzX75eHcFMOpekS12G</code></pre>
+      <p>
+        decodes cleanly as Base62 using the alphabet:
+      </p>
+      <pre><code>0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</code></pre>
+      <p>
+        That yields:
+      </p>
+      <pre><code>&lt;G&gt;E'@:O)"1N$\VA2.t7?SOEF0Qo6m?TDIPBJ=RT1i?iP</code></pre>
+      <p>
+        This intermediate output is significant for two reasons:
+      </p>
+      <ol>
+        <li>It is fully printable.</li>
+        <li>It contains punctuation patterns that are typical of ASCII85 / Base85 style encodings.</li>
+      </ol>
+      <h3>Base62 Decoder</h3>
+      <pre><code class="language-python">import string
+
+stage1 = "1a5MwfWvRp8Q9ipoihUROPHRqjDxeTm3ZJS5DSgdC8QCzX75eHcFMOpekS12G"
+alphabet = string.digits + string.ascii_uppercase + string.ascii_lowercase
+
+n = 0
+for ch in stage1:
+    n = n * 62 + alphabet.index(ch)
+
+out = bytearray()
+while n:
+    n, r = divmod(n, 256)
+    out.append(r)
+
+stage2 = bytes(out[::-1]).decode()
+print(stage2)</code></pre>
+      <p>
+        Output:
+      </p>
+      <pre><code>&lt;G&gt;E'@:O)"1N$\VA2.t7?SOEF0Qo6m?TDIPBJ=RT1i?iP</code></pre>
+    </section>
+
+    <section>
+      <h2>5. Stage Three: ASCII85</h2>
+      <p>
+        The stage-two string is valid input for ASCII85 decoding. Once decoded, it immediately reveals the flag:
+      </p>
+      <pre><code>UiTHack{3nc0d1ng_15_0v3r_9_7h0uz4nd}</code></pre>
+      <p>
+        This is the real endpoint. So the full decode chain is:
+      </p>
+      <table>
+        <tr>
+          <th>Stage</th>
+          <th>Data</th>
+        </tr>
+        <tr>
+          <td>Original</td>
+          <td><code>GFQTKTLXMZLXMUTQHBITS2LQN5UWQVKSJ5IEQUTRNJCHQZKUNUZVUSSTGVCFGZ3EIM4FCQ32LA3TKZKIMNDE2T3QMVVVGMJSI4======</code></td>
+        </tr>
+        <tr>
+          <td>After Base32</td>
+          <td><code>1a5MwfWvRp8Q9ipoihUROPHRqjDxeTm3ZJS5DSgdC8QCzX75eHcFMOpekS12G</code></td>
+        </tr>
+        <tr>
+          <td>After Base62</td>
+          <td><code>&lt;G&gt;E'@:O)"1N$\VA2.t7?SOEF0Qo6m?TDIPBJ=RT1i?iP</code></td>
+        </tr>
+        <tr>
+          <td>After ASCII85</td>
+          <td><code>UiTHack{3nc0d1ng_15_0v3r_9_7h0uz4nd}</code></td>
+        </tr>
+      </table>
+      <h3>ASCII85 Check</h3>
+      <pre><code class="language-python">import base64
+
+stage2 = r"""&lt;G&gt;E'@:O)"1N$\VA2.t7?SOEF0Qo6m?TDIPBJ=RT1i?iP"""
+flag = base64.a85decode(stage2).decode()
+print(flag)</code></pre>
+      <p>
+        Output:
+      </p>
+      <pre><code>UiTHack{3nc0d1ng_15_0v3r_9_7h0uz4nd}</code></pre>
+    </section>
+
+    <section>
+      <h2>6. Full Solve Script</h2>
+      <p>
+        The following Python script performs the entire decode chain end to end:
+      </p>
+      <pre><code class="language-python">import base64
+import string
+
+cipher = "GFQTKTLXMZLXMUTQHBITS2LQN5UWQVKSJ5IEQUTRNJCHQZKUNUZVUSSTGVCFGZ3EIM4FCQ32LA3TKZKIMNDE2T3QMVVVGMJSI4======"
+
+# Stage 1: Base32
+stage1 = base64.b32decode(cipher).decode()
+print("Stage 1:", stage1)
+
+# Stage 2: Base62
+alphabet = string.digits + string.ascii_uppercase + string.ascii_lowercase
+n = 0
+for ch in stage1:
+    n = n * 62 + alphabet.index(ch)
+
+buf = bytearray()
+while n:
+    n, r = divmod(n, 256)
+    buf.append(r)
+
+stage2 = bytes(buf[::-1]).decode()
+print("Stage 2:", stage2)
+
+# Stage 3: ASCII85
+flag = base64.a85decode(stage2).decode()
+print("Flag:", flag)</code></pre>
+      <p>
+        Expected output:
+      </p>
+      <pre><code>Stage 1: 1a5MwfWvRp8Q9ipoihUROPHRqjDxeTm3ZJS5DSgdC8QCzX75eHcFMOpekS12G
+Stage 2: &lt;G&gt;E'@:O)"1N$\VA2.t7?SOEF0Qo6m?TDIPBJ=RT1i?iP
+Flag: UiTHack{3nc0d1ng_15_0v3r_9_7h0uz4nd}</code></pre>
+    </section>
+
+    <section>
+      <h2>7. What “Base 179” Was Really Doing</h2>
+      <p>
+        The challenge title and wording were mostly misdirection. The string did not begin in a custom base-179 representation at all.
+        Instead, the challenge relied on the solver overcommitting to the stated hint and missing the visible structure of the ciphertext.
+      </p>
+      <p>
+        In practice, the lesson is:
+      </p>
+      <ol>
+        <li>Always test obvious standard encodings first.</li>
+        <li>Do not trust the challenge description more than the data itself.</li>
+        <li>When each decoding stage produces clean printable output, continue following the structure.</li>
+      </ol>
+      <p>
+        The phrase “base 179” may simply be part of the joke or thematic framing, while the actual solve path is a chain of familiar encodings:
+        Base32, then Base62, then ASCII85.
+      </p>
+    </section>
+
+    <section>
+      <h2>8. Final Answer</h2>
+      <p>
+        The flag is:
+      </p>
+      <p><span class="flag">UiTHack{3nc0d1ng_15_0v3r_9_7h0uz4nd}</span></p>
+    </section>
+  </main>
+</body>
+</html>

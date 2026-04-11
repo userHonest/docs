@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UiTHack26 Radio Intercept Crypto Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>UiTHack26 Radio Intercept Crypto Writeup</h1>
+      <p class="lead">
+        This challenge presents a short fictional military radio intercept, a block of hexadecimal ciphertext, and one important hint hidden in the dialogue itself: the sender complains that the key is tiny and specifically mentions Kasiski. That is enough to narrow the problem from “unknown ciphertext blob” to “short repeating-key polyalphabetic encryption,” and from there the solve is straightforward with a crib-based attack.
+      </p>
+      <div class="meta">
+        <span class="pill">Category: Cryptography</span>
+        <span class="pill">Theme: Reused short key</span>
+        <span class="pill">Technique: Repeating-key XOR</span>
+        <span class="pill">Solve: Crib dragging with known flag prefix</span>
+      </div>
+      <div class="flag">
+        <strong>Recovered flag:</strong>
+        <code>UiTHack26{4_r3us3d_k3y_1s_0nly_wh3n_us3d_0n_d1ff3r3nt_m3ss4g3s_r1ght?}</code>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Challenge Text</h2>
+        <p>The intercepted prompt looked like this:</p>
+        <pre><code>── INTERCEPT LOG · FREQ 14.225 MHz · 1967-11-14 23:41 ──
+DELTA-7:  Package is encoded and ready for transmission.
+ECHO-3:   Copy that. What key did dispatch send you?
+DELTA-7:  Same garbage as last week. Short enough to
+        fit on a matchbook. I swear these pencil-pushers
+        upstairs have never heard of Kasiski.
+ECHO-3:   Just send it. Nobody's listening.
+DELTA-7:  Affirmative.
+
+[TRANSMISSION FOLLOWS]
+b6f1798dd19babf8b195d7c75ff6c58b
+f3aed885d0e172f4c3a7f0a4eb97bcef
+45f6dea7b5b9b48abca8439ad4c9a6ac
+b49cd0f6599addcbb3b9b389d0eb72b7
+819fa8beb893
+── END INTERCEPT ──</code></pre>
+      </section>
+
+      <section class="card">
+        <h2>Immediate Observations</h2>
+        <ul>
+          <li>The transmitted block is valid hexadecimal and has even length, so it can be interpreted as raw bytes.</li>
+          <li>The operators complain about a very short key.</li>
+          <li>The explicit reference to Kasiski is the real hint. Kasiski examination is associated with repeated-key polyalphabetic ciphers such as Vigenere.</li>
+          <li>In modern CTF form, the simplest byte-oriented analogue is repeating-key XOR.</li>
+          <li>The expected flag format is almost certainly <code>UiTHack26{...}</code>, which gives us a known plaintext prefix.</li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Step 1: Normalize the Ciphertext</h2>
+      <p>
+        The first step is to join the hex lines into one continuous ciphertext string and confirm the size. I used a small Python snippet for that.
+      </p>
+      <pre><code class="language-python">ct_hex = (
+    "b6f1798dd19babf8b195d7c75ff6c58b"
+    "f3aed885d0e172f4c3a7f0a4eb97bcef"
+    "45f6dea7b5b9b48abca8439ad4c9a6ac"
+    "b49cd0f6599addcbb3b9b389d0eb72b7"
+    "819fa8beb893"
+)
+
+ct = bytes.fromhex(ct_hex)
+print(len(ct))</code></pre>
+      <p>The output is:</p>
+      <pre><code>70</code></pre>
+      <p>
+        So the transmission is 70 bytes long. That is short, but still more than enough to test repeated-key hypotheses.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 2: Extract the Real Hint</h2>
+      <p>
+        The dialogue is doing almost all the cryptanalytic work for us. It tells us:
+      </p>
+      <ul>
+        <li>the key is reused, because it is “the same garbage as last week,”</li>
+        <li>the key is short, because it fits on a matchbook,</li>
+        <li>the speaker explicitly knows Kasiski examination, which is used to attack repeated-key ciphers.</li>
+      </ul>
+      <p>
+        That does not prove the cipher is classical Vigenere over letters. It only strongly suggests a repeated key. Because the ciphertext is given as hex, the cleanest working hypothesis is:
+      </p>
+      <div class="note">
+        The plaintext was encrypted with a short repeating byte key using XOR, then the resulting bytes were shown in hexadecimal.
+      </div>
+      <p>
+        Before going directly to the right answer, I still checked a few alternative models. That is good practice, because challenge authors sometimes layer encodings or encrypt hex text instead of raw bytes.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 3: Check Repetition Signals</h2>
+      <p>
+        Classical Kasiski-style attacks look for repeated substrings. On a 70-byte ciphertext we should not expect huge repeated sequences, but quick triage is still useful.
+      </p>
+      <pre><code class="language-python">ct = bytes.fromhex(ct_hex)
+
+for n in range(2, 6):
+    seen = {}
+    reps = []
+    for i in range(len(ct) - n + 1):
+        gram = ct[i:i+n]
+        if gram in seen:
+            reps.append((gram.hex(), seen[gram], i, i - seen[gram]))
+        else:
+            seen[gram] = i
+    print("n", n, "reps", reps[:20])</code></pre>
+      <p>That produced:</p>
+      <pre><code>n 2 reps []
+n 3 reps []
+n 4 reps []
+n 5 reps []</code></pre>
+      <p>
+        Nothing repeated at the byte level. That is not a contradiction. The sample is short, and repeated-key XOR on natural language does not guarantee repeated ciphertext trigrams in only 70 bytes.
+      </p>
+      <p>
+        I also checked the raw hex characters themselves instead of the decoded bytes, which showed only a few repeated 3-character runs and no longer repeats:
+      </p>
+      <pre><code class="language-python">for n in range(3, 8):
+    seen = {}
+    reps = []
+    for i in range(len(ct_hex) - n + 1):
+        gram = ct_hex[i:i+n]
+        if gram in seen:
+            reps.append((gram, seen[gram], i, i - seen[gram]))
+        else:
+            seen[gram] = i
+    print("n", n, "count", len(reps), reps[:30])</code></pre>
+      <pre><code>n 3 count 3 [('9ad', 86, 106, 20), ('b9b', 74, 114, 40), ('d0e', 40, 120, 80)]
+n 4 count 0 []
+n 5 count 0 []
+n 6 count 0 []
+n 7 count 0 []</code></pre>
+      <p>
+        Those distances of 20, 40, and 80 hex characters are suggestive, but not strong enough on their own. The stronger evidence still comes from the narrative hint.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 4: Estimate Plausible Key Lengths</h2>
+      <p>
+        A common first pass against repeating-key XOR is to measure similarity statistics across key lengths. I used an index-of-coincidence style heuristic over byte columns.
+      </p>
+      <pre><code class="language-python">ct = bytes.fromhex(ct_hex)
+
+for k in range(1, 17):
+    cols = [ct[i::k] for i in range(k)]
+    iocs = []
+    for col in cols:
+        n = len(col)
+        freqs = {b: col.count(b) for b in set(col)}
+        ic = sum(v * (v - 1) for v in freqs.values()) / (n * (n - 1)) if n &gt; 1 else 0
+        iocs.append(ic)
+    print(k, round(sum(iocs) / len(iocs), 4))</code></pre>
+      <p>The result was:</p>
+      <pre><code>1 0.0062
+2 0.0109
+3 0.0038
+4 0.0067
+5 0.0242
+6 0.0051
+7 0.0
+8 0.0079
+9 0.004
+10 0.0476
+11 0.0061
+12 0.0
+13 0.0
+14 0.0
+15 0.0067
+16 0.0</code></pre>
+      <p>
+        The clearest spikes are at key lengths 5 and 10, with 10 looking strongest. That fits the story well: a short key, but not a one-character toy. This does not yet prove the key length, but it makes <code>k = 10</code> a very good candidate.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 5: Try Generic Single-Byte Column Solvers</h2>
+      <p>
+        If this is repeating-key XOR on English text, then for a guessed key length we can split the ciphertext into columns and solve each column as a single-byte XOR problem. I tried that as a sanity check.
+      </p>
+      <pre><code class="language-python">import string
+
+ct = bytes.fromhex(ct_hex)
+common = set(bytes(
+    string.ascii_letters + string.digits + string.punctuation + " \\n\\r\\t",
+    "ascii"
+))
+
+def score(pt):
+    total = 0
+    for b in pt:
+        if b in common:
+            total += 2
+        elif 32 &lt;= b &lt; 127:
+            total += 1
+        else:
+            total -= 5
+    return total
+
+for k in range(1, 13):
+    key = []
+    for i in range(k):
+        col = ct[i::k]
+        best = None
+        for kb in range(256):
+            pt = bytes(c ^ kb for c in col)
+            sc = score(pt)
+            if best is None or sc &gt; best[0]:
+                best = (sc, kb, pt)
+        key.append(best[1])
+
+    pt = bytes(c ^ key[i % k] for i, c in enumerate(ct))
+    print("k", k, "score", score(pt), "key", bytes(key).hex(), "repr", repr(pt[:80]))</code></pre>
+      <p>
+        This actually gave a notable result at <code>k = 10</code>. The best-scoring key from generic printable-text scoring was:
+      </p>
+      <pre><code>838000bda6e6848c80a4</code></pre>
+      <p>and the corresponding plaintext was:</p>
+      <pre><code>5qy0w}/t11TG_Kcmw"X!SarIeAt(k3?oEKxA154.?(C'r/" 48SvY'{-753-Skr
+'y,287</code></pre>
+      <p>
+        That is not the flag. It is merely printable garbage. This is a useful failure: it tells us generic English scoring is not reliable enough here because the true plaintext is a leetspeak flag, not normal prose. The challenge is easier to solve with a crib than with unsupervised scoring.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 6: Use the Known Flag Prefix as a Crib</h2>
+      <p>
+        At this point the best move is not to keep guessing. In CTFs, the flag format is usually known, and here the prefix is almost certainly <code>UiTHack26{</code>. If the plaintext starts with that string, then the first ten plaintext bytes immediately reveal the ten-byte key:
+      </p>
+      <pre><code class="language-python">ct = bytes.fromhex(ct_hex)
+known = b"UiTHack26{"
+key = bytes(c ^ p for c, p in zip(ct[:len(known)], known))
+print(key.hex())</code></pre>
+      <p>The output is:</p>
+      <pre><code>e3982dc5b0f8c0ca87ee</code></pre>
+      <p>
+        This is exactly the kind of key we would expect if the scheme is repeating-key XOR over raw bytes: a short arbitrary byte string, not a human-readable password.
+      </p>
+      <p>
+        Now decrypt the full ciphertext with that candidate key.
+      </p>
+      <pre><code class="language-python">pt = bytes(c ^ key[i % len(key)] for i, c in enumerate(ct))
+print(pt.decode())</code></pre>
+      <p>That yields the complete flag immediately:</p>
+      <pre><code>UiTHack26{4_r3us3d_k3y_1s_0nly_wh3n_us3d_0n_d1ff3r3nt_m3ss4g3s_r1ght?}</code></pre>
+      <p>
+        Once that plaintext appears, the solve is done. The output is perfectly structured, uses the expected flag wrapper, and is semantically coherent with the challenge theme.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Why the Attack Works</h2>
+      <p>
+        Repeating-key XOR encrypts each plaintext byte with a key byte chosen by position modulo the key length:
+      </p>
+      <pre><code class="language-text">cipher[i] = plaintext[i] XOR key[i mod key_length]</code></pre>
+      <p>
+        XOR is reversible, so if we know both the ciphertext byte and the plaintext byte for any position, we recover the corresponding key byte:
+      </p>
+      <pre><code class="language-text">key[i mod key_length] = cipher[i] XOR plaintext[i]</code></pre>
+      <p>
+        Because the flag prefix is ten bytes long and the real key length is also ten bytes, the known prefix recovers the entire key in one shot. That is why this challenge collapses instantly once the correct model is chosen.
+      </p>
+      <div class="warning">
+        If the key length had been longer than the known prefix, this would only have recovered part of the key, and we would have needed more crib dragging or statistical recovery. Here we got lucky because the challenge was designed to be clean and direct.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Full Solver Script</h2>
+      <p>
+        Below is a compact end-to-end solver that recovers the flag from the intercept. It includes the ciphertext, the known prefix, key recovery, and final decryption.
+      </p>
+      <pre><code class="language-python">#!/usr/bin/env python3
+
+ct_hex = (
+    "b6f1798dd19babf8b195d7c75ff6c58b"
+    "f3aed885d0e172f4c3a7f0a4eb97bcef"
+    "45f6dea7b5b9b48abca8439ad4c9a6ac"
+    "b49cd0f6599addcbb3b9b389d0eb72b7"
+    "819fa8beb893"
+)
+
+ct = bytes.fromhex(ct_hex)
+known_prefix = b"UiTHack26{"
+
+key = bytes(c ^ p for c, p in zip(ct[:len(known_prefix)], known_prefix))
+pt = bytes(c ^ key[i % len(key)] for i, c in enumerate(ct))
+
+print("ciphertext length:", len(ct))
+print("recovered key:", key.hex())
+print("plaintext:", pt.decode())</code></pre>
+      <p>Expected output:</p>
+      <pre><code>ciphertext length: 70
+recovered key: e3982dc5b0f8c0ca87ee
+plaintext: UiTHack26{4_r3us3d_k3y_1s_0nly_wh3n_us3d_0n_d1ff3r3nt_m3ss4g3s_r1ght?}</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>Full Analysis Script With Dead Ends Included</h2>
+      <p>
+        Since the request was for a verbose writeup with all the code, here is a longer script that reproduces the exploratory process: byte-level repetition checks, hex-level repetition checks, index-of-coincidence estimates, generic repeating-key XOR scoring, and the final crib-based solve.
+      </p>
+      <pre><code class="language-python">#!/usr/bin/env python3
+import string
+
+ct_hex = (
+    "b6f1798dd19babf8b195d7c75ff6c58b"
+    "f3aed885d0e172f4c3a7f0a4eb97bcef"
+    "45f6dea7b5b9b48abca8439ad4c9a6ac"
+    "b49cd0f6599addcbb3b9b389d0eb72b7"
+    "819fa8beb893"
+)
+
+ct = bytes.fromhex(ct_hex)
+print("ciphertext length:", len(ct))
+print()
+
+print("== repeated byte n-grams ==")
+for n in range(2, 6):
+    seen = {}
+    reps = []
+    for i in range(len(ct) - n + 1):
+        gram = ct[i:i+n]
+        if gram in seen:
+            reps.append((gram.hex(), seen[gram], i, i - seen[gram]))
+        else:
+            seen[gram] = i
+    print("n =", n, "repetitions =", reps[:20])
+print()
+
+print("== repeated hex-character n-grams ==")
+for n in range(3, 8):
+    seen = {}
+    reps = []
+    for i in range(len(ct_hex) - n + 1):
+        gram = ct_hex[i:i+n]
+        if gram in seen:
+            reps.append((gram, seen[gram], i, i - seen[gram]))
+        else:
+            seen[gram] = i
+    print("n =", n, "repetitions =", reps[:20])
+print()
+
+print("== average IC by candidate key length ==")
+for k in range(1, 17):
+    cols = [ct[i::k] for i in range(k)]
+    iocs = []
+    for col in cols:
+        n = len(col)
+        freqs = {b: col.count(b) for b in set(col)}
+        ic = sum(v * (v - 1) for v in freqs.values()) / (n * (n - 1)) if n > 1 else 0
+        iocs.append(ic)
+    print(k, round(sum(iocs) / len(iocs), 4))
+print()
+
+common = set(bytes(
+    string.ascii_letters + string.digits + string.punctuation + " \n\r\t",
+    "ascii"
+))
+
+def score(pt):
+    total = 0
+    for b in pt:
+        if b in common:
+            total += 2
+        elif 32 <= b < 127:
+            total += 1
+        else:
+            total -= 5
+    return total
+
+print("== generic repeating-key XOR guesses ==")
+for k in range(1, 13):
+    key = []
+    for i in range(k):
+        col = ct[i::k]
+        best = None
+        for kb in range(256):
+            pt = bytes(c ^ kb for c in col)
+            sc = score(pt)
+            if best is None or sc > best[0]:
+                best = (sc, kb)
+        key.append(best[1])
+    trial_key = bytes(key)
+    trial_pt = bytes(c ^ trial_key[i % k] for i, c in enumerate(ct))
+    print("k =", k, "score =", score(trial_pt), "key =", trial_key.hex(), "preview =", repr(trial_pt[:80]))
+print()
+
+print("== crib-based recovery ==")
+known_prefix = b"UiTHack26{"
+key = bytes(c ^ p for c, p in zip(ct[:len(known_prefix)], known_prefix))
+pt = bytes(c ^ key[i % len(key)] for i, c in enumerate(ct))
+
+print("known prefix:", known_prefix)
+print("recovered key:", key.hex())
+print("plaintext:", pt.decode())</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>Manual Walkthrough Without Code</h2>
+      <ol>
+        <li>Read the dialogue and notice the explicit Kasiski reference.</li>
+        <li>Infer that the intended weakness is a short repeating key.</li>
+        <li>Interpret the transmission as raw bytes encoded in hex.</li>
+        <li>Assume the plaintext is a flag beginning with <code>UiTHack26{</code>.</li>
+        <li>XOR the first ten ciphertext bytes with those ten known plaintext bytes.</li>
+        <li>Recover the full ten-byte key <code>e3982dc5b0f8c0ca87ee</code>.</li>
+        <li>Repeat that key across the entire ciphertext and XOR again.</li>
+        <li>Read the resulting plaintext flag.</li>
+      </ol>
+      <p>
+        This is one of those challenges where the right interpretation matters far more than brute force. Once the hint is understood correctly, the solve is almost immediate.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Final Answer</h2>
+      <p>The flag recovered from the intercept is:</p>
+      <div class="flag">
+        <code>UiTHack26{4_r3us3d_k3y_1s_0nly_wh3n_us3d_0n_d1ff3r3nt_m3ss4g3s_r1ght?}</code>
+      </div>
+      <p class="footer">
+        The core lesson is simple: short reused keys are fragile, and if an attacker knows even a small piece of plaintext in the right position, the key can fall apart immediately.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Writeup: Weak RSA / Legacy SSH Key Challenge</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <div class="page">
+    <main class="sheet">
+      <h1>Writeup: Weak RSA / Legacy SSH Key Challenge</h1>
+      <p class="lede">
+        This report documents the offline analysis of a recovered SSH public key from a legacy Debian-era system,
+        including fingerprinting, modulus extraction, tool-assisted analysis, and validation of the recovered
+        cryptographic material.
+      </p>
+      <p class="meta">Prepared as a technical challenge writeup in HTML format.</p>
+
+      <div class="box warn">
+        <strong>Scope note:</strong> This document is limited to local cryptographic analysis and validation of the
+        provided key material. It intentionally does not include steps for authenticating to a live external host.
+      </div>
+
+      <h2>1. Challenge Context</h2>
+      <p>
+        The supplied prompt described an SSH public key recovered from a decommissioned Debian Etch server that went
+        offline in 2009. That description strongly suggests historical key-generation weakness, especially the
+        Debian OpenSSL entropy flaw from <code>CVE-2008-0166</code>. That was the initial hypothesis, but the actual
+        recovery path still needed to be verified empirically.
+      </p>
+
+      <h2>2. Provided Artifact</h2>
+      <pre><code>ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1TnqEb1xLloPGAIKmdxJXHuNZAicwj/IDjSWshsgqnfjYQCH8HyQT9+l4RYmCBDK/usbqgpw4+zh5Pg0Zx8dm/ho+B1r5z4Vv9pk5SLieeM+nxM1bfXa5oz8TJuztIHz8LmQp3ByAal9kc4HTXDCMoaWAmFju+mfmnpG+p+t+vc707uzJJLqIwCoZo/JCDdL3+K9fHoeClP+1MeW1SnWyN8IrQmXqMYqDiIzMK5ckMhTV8ga95G77DW/xYGdLp+Ic5OaPfo1bE+VNSe82oSbwaTcmOS2gXL9R9rs70gNGuJRbsDvVM13LjKhL4mvj1ABOHqyaR6ZybrdNu9LVkNeyQ== root@targetcluster</code></pre>
+
+      <h2>3. Local Enumeration</h2>
+      <p>
+        The first step was to confirm the contents of the working directory and verify that the recovered public key
+        was present as a standalone file.
+      </p>
+      <pre><code>pwd
+ls -la
+cat given_key.pub</code></pre>
+
+      <h2>4. Public-Key Fingerprinting</h2>
+      <p>
+        OpenSSH tooling was used to determine the key size and compute stable fingerprints for later comparison.
+      </p>
+      <pre><code>ssh-keygen -lf given_key.pub
+ssh-keygen -E md5 -lf given_key.pub</code></pre>
+
+      <p>Observed output:</p>
+      <pre><code>2048 SHA256:yqDW7ZhouG1jafUTgPJ8aL2mBZwNkc9pnnehRbBI810 root@targetcluster (RSA)
+2048 MD5:00:02:d5:af:29:27:6c:95:a4:9d:c2:ab:3b:50:67:07 root@targetcluster (RSA)</code></pre>
+
+      <h2>5. Converting to PEM and Extracting the Modulus</h2>
+      <p>
+        The SSH-format key was converted to PEM so that OpenSSL could expose the RSA modulus directly. That value is
+        central to any later factorization-based analysis.
+      </p>
+      <pre><code>ssh-keygen -f given_key.pub -e -m PKCS8 &gt; pub.pem
+openssl rsa -pubin -in pub.pem -modulus -noout</code></pre>
+
+      <p>Observed modulus:</p>
+      <pre><code>D539EA11BD712E5A0F18020A99DC495C7B8D64089CC23FC80E3496B21B20AA77E3610087F07C904FDFA5E116260810CAFEEB1BAA0A70E3ECE1E4F834671F1D9BF868F81D6BE73E15BFDA64E522E279E33E9F13356DF5DAE68CFC4C9BB3B481F3F0B990A7707201A97D91CE074D70C2328696026163BBE99F9A7A46FA9FADFAF73BD3BBB32492EA2300A8668FC908374BDFE2BD7C7A1E0A53FED4C796D529D6C8DF08AD0997A8C62A0E223330AE5C90C85357C81AF791BBEC35BFC5819D2E9F8873939A3DFA356C4F953527BCDA849BC1A4DC98E4B68172FD47DAECEF480D1AE2516EC0EF54CD772E32A12F89AF8F5001387AB2691E99C9BADD36EF4B56435EC9</code></pre>
+
+      <h2>6. Historical Hypothesis Testing</h2>
+      <p>
+        Because the challenge referenced Debian Etch, the first analytical branch was to test the common weak-Debian-key
+        hypothesis. A local copy of the public Debian weak-key repository was obtained and examined.
+      </p>
+      <pre><code>git clone https://github.com/g0tmi1k/debian-ssh
+cd debian-ssh
+grep -R -F "$(cut -d' ' -f2 ../given_key.pub)" .
+cd ..</code></pre>
+
+      <p>
+        Direct matching of the raw SSH blob did not produce an immediate hit. That does not prove the hypothesis false,
+        but it does mean the next practical step is to test the RSA key mathematically rather than continue with
+        filename-based guessing.
+      </p>
+
+      <h2>7. Tooling Setup with RsaCtfTool</h2>
+      <p>
+        A dedicated virtual environment was created and <code>RsaCtfTool</code> was installed to run multiple RSA
+        recovery strategies against the public key.
+      </p>
+      <pre><code>git clone https://github.com/RsaCtfTool/RsaCtfTool
+cd RsaCtfTool
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install .</code></pre>
+
+      <p>
+        There were two minor setup issues during this stage:
+      </p>
+      <ul>
+        <li>An initial attempt to run <code>python3 RsaCtfTool.py</code> failed because the repository layout uses the modern package structure under <code>src/</code>, not the old single-file entrypoint.</li>
+        <li>An initial attempt to run <code>python3 -m src.RsaCtfTool</code> also failed because that package is not directly executable as a module entrypoint in this checkout.</li>
+      </ul>
+      <p>
+        Installing the project with <code>pip install .</code> resolved that and exposed the correct <code>RsaCtfTool</code> command-line entrypoint.
+      </p>
+
+      <h2>8. Early Environment Checks</h2>
+      <p>
+        Before focusing entirely on RSA factorization, several common legacy-key routes were checked. These checks were
+        useful for narrowing the problem and ruling out misleading assumptions from the challenge text.
+      </p>
+      <pre><code>ssh-vulnkey ../given_key.pub
+grep -R "00:02:d5:af:29:27:6c:95:a4:9d:c2:ab:3b:50:67:07" /usr/share/ssh/</code></pre>
+
+      <p>
+        Those checks did not produce a direct usable result in the local environment. In particular, <code>ssh-vulnkey</code>
+        was not present, and the local system did not provide a ready-made blacklist path that immediately mapped the
+        fingerprint. That increased confidence that the fastest path was direct mathematical analysis of the key itself.
+      </p>
+
+      <h2>9. Broad Attack Evaluation</h2>
+      <p>
+        The public key was first tested across the full default attack set. Most attacks did not apply, but the key
+        result was that the <code>factordb</code> attack succeeded.
+      </p>
+      <pre><code>RsaCtfTool --publickey ../given_key.pub --attack all</code></pre>
+
+      <p>Observed result excerpt:</p>
+      <pre><code>[*] Testing key ../given_key.pub.
+[*] Performing factordb attack on ../given_key.pub.
+[*] Attack success with factordb method !</code></pre>
+
+      <p>
+        The broader attack run also showed that several standard categories such as small-prime checks, non-RSA detection,
+        and common toy-CTF prime databases did not trigger. That further isolated the successful path to factor lookup.
+      </p>
+
+      <h2>10. Recovery Path: Factorable RSA Modulus</h2>
+      <p>
+        This is the decisive technical result. The recovery path was not merely a historical Debian weak-key lookup.
+        The RSA modulus itself was recoverable through factorization data. Once the factors <code>p</code> and
+        <code>q</code> are known, the private exponent <code>d</code> can be computed, and the full private key can be
+        reconstructed.
+      </p>
+      <pre><code>RsaCtfTool --publickey ../given_key.pub --attack factordb --private</code></pre>
+
+      <p>
+        That command yielded a PEM-encoded RSA private key. The full private key is intentionally omitted from this
+        report.
+      </p>
+
+      <h2>11. Private-Key Validation</h2>
+      <p>
+        After saving the recovered PEM material to <code>id_rsa</code>, the corresponding public key was derived and
+        compared against the original artifact.
+      </p>
+      <pre><code>ssh-keygen -y -f id_rsa &gt; derived.pub
+diff -u derived.pub ../given_key.pub</code></pre>
+
+      <p>Observed diff:</p>
+      <pre><code>--- derived.pub
++++ ../given_key.pub
+@@ -1 +1 @@
+-ssh-rsa AAAA...==
++ssh-rsa AAAA...== root@targetcluster</code></pre>
+
+      <p>
+        The only difference was the trailing SSH comment field, <code>root@targetcluster</code>. That field is metadata
+        and does not affect the cryptographic identity of the key. The base64-encoded key material matched.
+      </p>
+
+      <h2>12. Troubleshooting and Corrections</h2>
+      <p>
+        Several operational issues came up during the workflow, and each is worth documenting because they are common when
+        turning recovered key material into a usable local artifact.
+      </p>
+      <ul>
+        <li>A relative-path mistake occurred when comparing <code>derived.pub</code> to <code>given_key.pub</code> from inside the <code>RsaCtfTool</code> directory. The fix was simply to compare against <code>../given_key.pub</code> or run the comparison from the parent directory.</li>
+        <li>One saved copy of <code>id_rsa</code> became corrupted when challenge text was accidentally pasted into the PEM block. That copy had to be replaced with a clean version before any OpenSSH tooling would accept it.</li>
+        <li>The public/private comparison initially appeared different because the recovered public key generated by <code>ssh-keygen -y</code> did not include the original comment. This was not a cryptographic mismatch, only a metadata difference.</li>
+      </ul>
+
+      <p>
+        The working comparison used in the parent directory was:
+      </p>
+      <pre><code>diff -u RsaCtfTool/derived.pub given_key.pub</code></pre>
+
+      <p>
+        The result showed identical key material with only the comment present on the original line:
+      </p>
+      <pre><code>--- RsaCtfTool/derived.pub
++++ given_key.pub
+@@ -1 +1 @@
+-ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1TnqEb1xLloPGAIKmdxJXHuNZAicwj/IDjSWshsgqnfjYQCH8HyQT9+l4RYmCBDK/usbqgpw4+zh5Pg0Zx8dm/ho+B1r5z4Vv9pk5SLieeM+nxM1bfXa5oz8TJuztIHz8LmQp3ByAal9kc4HTXDCMoaWAmFju+mfmnpG+p+t+vc707uzJJLqIwCoZo/JCDdL3+K9fHoeClP+1MeW1SnWyN8IrQmXqMYqDiIzMK5ckMhTV8ga95G77DW/xYGdLp+Ic5OaPfo1bE+VNSe82oSbwaTcmOS2gXL9R9rs70gNGuJRbsDvVM13LjKhL4mvj1ABOHqyaR6ZybrdNu9LVkNeyQ==
++ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1TnqEb1xLloPGAIKmdxJXHuNZAicwj/IDjSWshsgqnfjYQCH8HyQT9+l4RYmCBDK/usbqgpw4+zh5Pg0Zx8dm/ho+B1r5z4Vv9pk5SLieeM+nxM1bfXa5oz8TJuztIHz8LmQp3ByAal9kc4HTXDCMoaWAmFju+mfmnpG+p+t+vc707uzJJLqIwCoZo/JCDdL3+K9fHoeClP+1MeW1SnWyN8IrQmXqMYqDiIzMK5ckMhTV8ga95G77DW/xYGdLp+Ic5OaPfo1bE+VNSe82oSbwaTcmOS2gXL9R9rs70gNGuJRbsDvVM13LjKhL4mvj1ABOHqyaR6ZybrdNu9LVkNeyQ== root@targetcluster</code></pre>
+
+      <h2>13. Findings Summary</h2>
+      <table>
+        <tr>
+          <th>Property</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>Key type</td>
+          <td>RSA</td>
+        </tr>
+        <tr>
+          <td>Key size</td>
+          <td>2048 bits</td>
+        </tr>
+        <tr>
+          <td>Public-key fingerprint</td>
+          <td><code>MD5:00:02:d5:af:29:27:6c:95:a4:9d:c2:ab:3b:50:67:07</code></td>
+        </tr>
+        <tr>
+          <td>Recovery method</td>
+          <td>RSA modulus factorization via <code>factordb</code> path in RsaCtfTool</td>
+        </tr>
+        <tr>
+          <td>Validation result</td>
+          <td>Recovered private key reproduces the original public key</td>
+        </tr>
+      </table>
+
+      <h2>14. Technical Interpretation</h2>
+      <p>
+        The challenge narrative suggested a legacy Debian OpenSSL bug, but the experimentally confirmed result is more
+        direct: the modulus was factorable. That alone is enough to completely break RSA, regardless of how the key was
+        originally generated.
+      </p>
+      <ul>
+        <li>The public key reveals the RSA modulus <code>n</code> and public exponent <code>e</code>.</li>
+        <li>If <code>n</code> can be factored into <code>p</code> and <code>q</code>, then <code>phi(n)</code> is known.</li>
+        <li>The private exponent <code>d</code> is computed as the modular inverse of <code>e</code> modulo <code>phi(n)</code>.</li>
+        <li>The full RSA private key can then be reconstructed and exported in standard PEM format.</li>
+      </ul>
+
+      <h2>15. Why the Debian Hypothesis Was Plausible but Secondary</h2>
+      <p>
+        The Debian Etch framing was still a useful lead. A 2009-era Debian system immediately raises the possibility of
+        the historical OpenSSL entropy bug, and that is exactly why the weak-key archive was checked first. However, once
+        direct factorization-based recovery succeeded, the narrative hint became secondary to the concrete cryptographic
+        result. From an analyst's perspective, the key point is not which story appears in the prompt, but which attack
+        path is demonstrably successful against the actual modulus.
+      </p>
+
+      <h2>16. Defensive Lessons</h2>
+      <ul>
+        <li>Do not assume a challenge hint identifies the real cryptographic weakness; validate with tooling.</li>
+        <li>Any factorable RSA modulus must be treated as fully compromised.</li>
+        <li>SSH comments such as <code>root@targetcluster</code> are informational only.</li>
+        <li>Legacy keys should be audited against weak-key datasets and factorization sources during incident response.</li>
+      </ul>
+
+      <h2>17. Full Command Log Used for Offline Analysis</h2>
+      <pre><code>cat given_key.pub
+ssh-keygen -lf given_key.pub
+ssh-keygen -E md5 -lf given_key.pub
+ssh-keygen -f given_key.pub -e -m PKCS8 &gt; pub.pem
+openssl rsa -pubin -in pub.pem -modulus -noout
+
+git clone https://github.com/g0tmi1k/debian-ssh
+cd debian-ssh
+grep -R -F "$(cut -d' ' -f2 ../given_key.pub)" .
+ssh-vulnkey ../given_key.pub
+cd ..
+
+git clone https://github.com/RsaCtfTool/RsaCtfTool
+cd RsaCtfTool
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install .
+python3 RsaCtfTool.py --publickey ../given_key.pub --attack all
+python3 -m src.RsaCtfTool --publickey ../given_key.pub --attack all
+
+RsaCtfTool --publickey ../given_key.pub --attack all
+RsaCtfTool --publickey ../given_key.pub --attack factordb --private
+
+ssh-keygen -y -f id_rsa &gt; derived.pub
+diff -u derived.pub ../given_key.pub
+cd ..
+diff -u RsaCtfTool/derived.pub given_key.pub</code></pre>
+
+      <h2>18. Final Conclusion</h2>
+      <p>
+        Offline analysis shows that the supplied SSH public key corresponds to an RSA keypair whose private key can be
+        reconstructed because the modulus is not secure. The reconstructed private key was validated locally by deriving
+        the corresponding public key and confirming that it matched the original artifact.
+      </p>
+      
+      <h2>19. Challenge Outcome</h2>
+      <p>
+        After recovering and validating the RSA private key, the challenge was considered solved. The reconstructed key
+        matched the supplied public key and represented the credential intended by the challenge design.
+      </p>
+      <p>
+        This confirmed that the weakness was sufficient to recover the correct private key from the public material.
+      </p>
+    </main>
+  </div>
+</body>
+</html>

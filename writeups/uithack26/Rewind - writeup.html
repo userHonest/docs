@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rewind Reversing Challenge Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Rewind Reversing Challenge Writeup</h1>
+      <p class="lead">
+        This writeup covers the full static analysis of the <code>rewind</code> binary. The challenge is a straightforward reversing task: find the accepted key by understanding how the program transforms user input and comparing that transformed state against a hardcoded target table.
+      </p>
+      <div class="meta">
+        <span class="pill">Category: Reversing</span>
+        <span class="pill">Binary: <code>rewind</code></span>
+        <span class="pill">Platform: ELF 64-bit x86-64 PIE</span>
+        <span class="pill">Approach: Static reverse + transform inversion</span>
+      </div>
+      <div class="flag">
+        <strong>Recovered flag:</strong> <code>UiTHack26{r3w1nd_th3_t4p3}</code>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Challenge Files</h2>
+        <p>The challenge directory contained:</p>
+        <pre><code>rewind
+rewind:Zone.Identifier</code></pre>
+        <p>
+          The sidecar file is just Windows download metadata. The real target is the ELF executable.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>First Impression</h2>
+        <p>
+          This binary is very friendly to static reversing:
+        </p>
+        <ul>
+          <li>it is not stripped,</li>
+          <li>it contains debug info,</li>
+          <li>there is a visible <code>main</code> symbol,</li>
+          <li>the challenge logic lives directly inside that function.</li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Step 1: Basic Enumeration</h2>
+      <p>The first commands were simple file triage:</p>
+      <pre><code class="language-bash">ls -lah /home/userhonest/uithack26/rewind
+file /home/userhonest/uithack26/rewind/*
+strings -n 6 /home/userhonest/uithack26/rewind/* | sed -n '1,220p'</code></pre>
+      <p>The important result from <code>file</code> was:</p>
+      <pre><code>/home/userhonest/uithack26/rewind/rewind:
+ELF 64-bit LSB pie executable, x86-64, dynamically linked, with debug_info, not stripped</code></pre>
+      <p>The most useful string hits were:</p>
+      <pre><code>C:\&gt; ENTER KEY:
+REWIND COMPLETE
+TAPE ERROR
+main.c
+/root/UiTHack/UiTHack26/rev/rewind/src</code></pre>
+      <p>
+        At that point, there was no need to overcomplicate the task. A clean static reverse was likely enough.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 2: Symbol Recovery</h2>
+      <p>Because the binary is not stripped, getting the symbol table is trivial:</p>
+      <pre><code class="language-bash">nm -C /home/userhonest/uithack26/rewind/rewind | sed -n '1,220p'</code></pre>
+      <p>This showed a normal ELF layout with a visible <code>main</code>:</p>
+      <pre><code>00000000000011e9 T main</code></pre>
+      <p>
+        That is exactly what we want in a beginner-to-intermediate reversing challenge. The next step is to disassemble <code>main</code> and translate it into higher-level logic.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 3: Inspect the Binary Layout</h2>
+      <p>Before diving into the full disassembly, it is useful to gather structure:</p>
+      <pre><code class="language-bash">readelf -a /home/userhonest/uithack26/rewind/rewind | sed -n '1,260p'
+objdump -s -j .rodata /home/userhonest/uithack26/rewind/rewind</code></pre>
+      <p>The <code>.rodata</code> section contained only the prompt and success or failure strings:</p>
+      <pre><code>2000 01000200 433a5c3e 20454e54 4552204b  ....C:\&gt; ENTER K
+2010 45593a00 52455749 4e442043 4f4d504c  EY:.REWIND COMPL
+2020 45544500 54415045 20455252 4f5200    ETE.TAPE ERROR.</code></pre>
+      <p>
+        That matters because it means the real comparison data is not in a nice static string. Instead, the program builds integer arrays directly on the stack.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 4: Disassemble <code>main</code></h2>
+      <p>The core command was:</p>
+      <pre><code class="language-bash">objdump -d -Mintel /home/userhonest/uithack26/rewind/rewind</code></pre>
+      <p>
+        The disassembly is long, but the structure is very regular. The function does five things:
+      </p>
+      <ol>
+        <li>initialize a 64-entry constant table on the stack,</li>
+        <li>read user input with <code>fgets</code>,</li>
+        <li>copy the first 64 input bytes into an integer array,</li>
+        <li>apply several reversible transformations,</li>
+        <li>compare the final result against a hardcoded 64-entry target array.</li>
+      </ol>
+
+      <h3>Input Handling</h3>
+      <p>The binary prompts the user and reads up to 64 bytes:</p>
+      <pre><code>malloc(0x40)
+printf("C:\\&gt; ENTER KEY:")
+fgets(buf, 0x40, stdin)</code></pre>
+      <p>
+        Then it copies each input byte into a 32-bit integer array. This is important because all later operations happen on 32-bit integers, but the values are still just ASCII byte values.
+      </p>
+
+      <h3>Visible Transform Pattern</h3>
+      <p>
+        Once the input has been copied into the working array, the disassembly shows a very clean transformation chain. Each loop is easy to identify because the compiler emitted separate loop counters and temporaries for every stage.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Step 5: Reconstruct the Algorithm</h2>
+      <p>Reading the loops in order gives this exact logic:</p>
+      <ol>
+        <li>Swap adjacent pairs: <code>[0,1] [2,3] [4,5] ...</code></li>
+        <li>XOR each element with a 64-entry constant table.</li>
+        <li>Reverse the full 64-element array.</li>
+        <li>Swap adjacent pairs again.</li>
+        <li>Rotate the array by 7 positions.</li>
+        <li>Compare against a hardcoded 64-entry target table.</li>
+      </ol>
+
+      <p>
+        In pseudocode, the logic is:
+      </p>
+      <pre><code class="language-c">read input[64]
+work[i] = (signed char)input[i] for i in 0..63
+
+for (i = 0; i &lt;= 62; i += 2)
+    swap(work[i], work[i + 1]);
+
+for (i = 0; i &lt;= 63; i++)
+    work[i] ^= table1[i];
+
+for (i = 0; i &lt;= 31; i++)
+    swap(work[i], work[63 - i]);
+
+for (i = 0; i &lt;= 62; i += 2)
+    swap(work[i], work[i + 1]);
+
+for (i = 0; i &lt;= 63; i++)
+    rotated[(i + 7) % 64] = work[i];
+
+work = rotated;
+
+if (work == target)
+    puts("REWIND COMPLETE");
+else
+    puts("TAPE ERROR");</code></pre>
+
+      <div class="note">
+        The key observation is that every one of these operations is reversible. That means we do not need brute force, symbolic execution, or dynamic instrumentation. We can just invert the pipeline and recover the original accepted input directly.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Step 6: Extract the Constant Tables</h2>
+      <p>
+        The binary materializes both the XOR table and the final comparison table through long runs of <code>mov DWORD PTR [rbp-...], imm32</code>. Those values were transcribed into Python arrays.
+      </p>
+
+      <h3>XOR Table</h3>
+      <pre><code class="language-python">const1 = [
+    0x2f,0x5c,0x0f,0x44,0x21,0x51,0x0c,0x36,0x4d,0x1c,0x3f,0x5b,0x2c,0x07,0x27,0x56,
+    0x15,0x3b,0x49,0x24,0x58,0x0b,0x31,0x40,0x19,0x4e,0x1f,0x45,0x35,0x12,0x52,0x28,
+    0x61,0x1a,0x3d,0x0e,0x4b,0x2a,0x09,0x43,0x25,0x4f,0x14,0x38,0x57,0x20,0x41,0x0d,
+    0x33,0x17,0x48,0x30,0x54,0x11,0x37,0x1d,0x46,0x29,0x26,0x63,0x16,0x4c,0x3c,0x2e
+]</code></pre>
+
+      <h3>Target Table</h3>
+      <pre><code class="language-python">target = [
+    0x5d,0x42,0x30,0x47,0x10,0x46,0x09,0x3c,0x2e,0x16,0x4c,0x26,0x63,0x46,0x29,0x37,
+    0x1d,0x54,0x11,0x48,0x30,0x33,0x17,0x41,0x0d,0x57,0x20,0x14,0x38,0x25,0x4f,0x09,
+    0x43,0x4b,0x2a,0x3d,0x0e,0x61,0x1a,0x52,0x28,0x35,0x12,0x1f,0x4f,0x64,0x7d,0x41,
+    0x74,0x2c,0x54,0x7a,0x4c,0x61,0x64,0x43,0x38,0x1d,0x70,0x0c,0x29,0x36,0x2a,0x3e
+]</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>Step 7: Invert the Transformations</h2>
+      <p>
+        To recover the original input, we reverse the operations in the opposite order:
+      </p>
+      <ol>
+        <li>Undo the rotate-by-7.</li>
+        <li>Undo the second adjacent-pair swap.</li>
+        <li>Undo the array reversal.</li>
+        <li>Undo the XOR with the same table.</li>
+        <li>Undo the first adjacent-pair swap.</li>
+      </ol>
+
+      <p>
+        Since swap, reverse, and XOR are all self-inverse, only the rotation requires careful indexing.
+      </p>
+
+      <pre><code class="language-python">const1 = [
+    0x2f,0x5c,0x0f,0x44,0x21,0x51,0x0c,0x36,0x4d,0x1c,0x3f,0x5b,0x2c,0x07,0x27,0x56,
+    0x15,0x3b,0x49,0x24,0x58,0x0b,0x31,0x40,0x19,0x4e,0x1f,0x45,0x35,0x12,0x52,0x28,
+    0x61,0x1a,0x3d,0x0e,0x4b,0x2a,0x09,0x43,0x25,0x4f,0x14,0x38,0x57,0x20,0x41,0x0d,
+    0x33,0x17,0x48,0x30,0x54,0x11,0x37,0x1d,0x46,0x29,0x26,0x63,0x16,0x4c,0x3c,0x2e
+]
+
+target = [
+    0x5d,0x42,0x30,0x47,0x10,0x46,0x09,0x3c,0x2e,0x16,0x4c,0x26,0x63,0x46,0x29,0x37,
+    0x1d,0x54,0x11,0x48,0x30,0x33,0x17,0x41,0x0d,0x57,0x20,0x14,0x38,0x25,0x4f,0x09,
+    0x43,0x4b,0x2a,0x3d,0x0e,0x61,0x1a,0x52,0x28,0x35,0x12,0x1f,0x4f,0x64,0x7d,0x41,
+    0x74,0x2c,0x54,0x7a,0x4c,0x61,0x64,0x43,0x38,0x1d,0x70,0x0c,0x29,0x36,0x2a,0x3e
+]
+
+# Invert rotation:
+# forward: out[(i + 7) % 64] = work[i]
+# inverse: work[i] = out[(i + 7) % 64]
+a = [target[(i + 7) % 64] for i in range(64)]
+
+# Undo second pair swap
+for i in range(0, 64, 2):
+    a[i], a[i + 1] = a[i + 1], a[i]
+
+# Undo reverse
+a = list(reversed(a))
+
+# Undo XOR
+for i in range(64):
+    a[i] ^= const1[i]
+
+# Undo first pair swap
+for i in range(0, 64, 2):
+    a[i], a[i + 1] = a[i + 1], a[i]
+
+print(a)
+print(''.join(chr(x) if 32 &lt;= x &lt; 127 else f'\\\\x{x:02x}' for x in a))</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>Step 8: Recovered Plaintext</h2>
+      <p>The output of the inversion script is:</p>
+      <pre><code>[85, 105, 84, 72, 97, 99, 107, 50, 54, 123, 114, 51, 119, 49, 110, 100,
+95, 116, 104, 51, 95, 116, 52, 112, 51, 125, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]</code></pre>
+      <p>Interpreted as ASCII, that becomes:</p>
+      <pre><code>UiTHack26{r3w1nd_th3_t4p3}\n\0\0\0...</code></pre>
+      <p>
+        So the meaningful portion is clearly:
+      </p>
+      <pre><code>UiTHack26{r3w1nd_th3_t4p3}</code></pre>
+      <p>
+        The trailing <code>\n</code> comes from pressing Enter because the program uses <code>fgets</code>. The remaining zero bytes are just the unused tail of the 64-byte buffer state in the intended solution path.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Subtle Implementation Detail</h2>
+      <p>
+        One detail worth noting is that the binary compares all 64 integer slots, not just the visible flag length. The recovered state after inversion is:
+      </p>
+      <ul>
+        <li>the flag text,</li>
+        <li>followed by a newline byte,</li>
+        <li>followed by null bytes for the rest of the 64-byte state.</li>
+      </ul>
+      <p>
+        In a perfect implementation, the buffer would be explicitly initialized or the code would compare only the meaningful input length. Here, the intended accepted input is still obvious, but the implementation leaks that the author expected a standard line input ending in <code>\n</code>.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Why This Works Well as a Challenge</h2>
+      <p>
+        This is a clean reversing exercise because it rewards reading control flow rather than throwing tools at the problem blindly. The transformations are simple enough to recognize in assembly:
+      </p>
+      <ul>
+        <li>pair swaps show up as two loads and two stores,</li>
+        <li>XOR is visible directly,</li>
+        <li>reverse is recognizable through symmetric index access,</li>
+        <li>rotation appears as indexed writes using modular arithmetic.</li>
+      </ul>
+      <p>
+        Once the transformation chain is reconstructed, the solve is deterministic and elegant.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Minimal Solver</h2>
+      <p>
+        Here is a minimal standalone solver script:
+      </p>
+      <pre><code class="language-python">const1 = [
+    0x2f,0x5c,0x0f,0x44,0x21,0x51,0x0c,0x36,0x4d,0x1c,0x3f,0x5b,0x2c,0x07,0x27,0x56,
+    0x15,0x3b,0x49,0x24,0x58,0x0b,0x31,0x40,0x19,0x4e,0x1f,0x45,0x35,0x12,0x52,0x28,
+    0x61,0x1a,0x3d,0x0e,0x4b,0x2a,0x09,0x43,0x25,0x4f,0x14,0x38,0x57,0x20,0x41,0x0d,
+    0x33,0x17,0x48,0x30,0x54,0x11,0x37,0x1d,0x46,0x29,0x26,0x63,0x16,0x4c,0x3c,0x2e
+]
+
+target = [
+    0x5d,0x42,0x30,0x47,0x10,0x46,0x09,0x3c,0x2e,0x16,0x4c,0x26,0x63,0x46,0x29,0x37,
+    0x1d,0x54,0x11,0x48,0x30,0x33,0x17,0x41,0x0d,0x57,0x20,0x14,0x38,0x25,0x4f,0x09,
+    0x43,0x4b,0x2a,0x3d,0x0e,0x61,0x1a,0x52,0x28,0x35,0x12,0x1f,0x4f,0x64,0x7d,0x41,
+    0x74,0x2c,0x54,0x7a,0x4c,0x61,0x64,0x43,0x38,0x1d,0x70,0x0c,0x29,0x36,0x2a,0x3e
+]
+
+a = [target[(i + 7) % 64] for i in range(64)]
+for i in range(0, 64, 2):
+    a[i], a[i + 1] = a[i + 1], a[i]
+a = list(reversed(a))
+for i in range(64):
+    a[i] ^= const1[i]
+for i in range(0, 64, 2):
+    a[i], a[i + 1] = a[i + 1], a[i]
+
+flag = ''.join(chr(x) for x in a[:26])
+print(flag)</code></pre>
+      <p>The script prints:</p>
+      <pre><code>UiTHack26{r3w1nd_th3_t4p3}</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>Final Answer</h2>
+      <p>The accepted flag is:</p>
+      <pre><code>UiTHack26{r3w1nd_th3_t4p3}</code></pre>
+      <p class="footer">
+        This writeup was produced from the actual static analysis of the binary in the workspace. The file itself was not executable in the current environment, so the solve was completed fully through reverse engineering rather than runtime verification.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

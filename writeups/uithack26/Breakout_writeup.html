@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UiTHack26 Breakout Reversing Writeup</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(17, 17, 17, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --muted-strong: #d4d4d8;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --success: #7ee787;
+  --warning: #f5c451;
+  --danger: #ff7b72;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --content-width: 1100px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 0, transparent 18rem),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 0, transparent 24rem),
+    linear-gradient(180deg, #060606 0%, #000000 34%, #050505 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+  opacity: 0.14;
+}
+
+main,
+.page,
+.wrap,
+.sheet {
+  width: min(var(--content-width), calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+main,
+.page,
+.wrap {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.sheet {
+  padding: 28px;
+}
+
+.body {
+  padding: 28px;
+}
+
+header,
+section,
+.hero,
+.card,
+.sheet,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+header,
+section,
+.hero,
+.toc,
+.box,
+.callout,
+.note,
+.warn,
+.good,
+.diagram,
+.quote,
+.result {
+  padding: 28px;
+  margin-bottom: 18px;
+}
+
+.card {
+  padding: 18px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 14px;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 6vw, 4.75rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  font-weight: 650;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+p,
+li,
+td,
+th,
+figcaption {
+  font-size: 1rem;
+  color: var(--muted-strong);
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+strong {
+  color: var(--text);
+}
+
+code,
+.mono,
+.label,
+.pill,
+.meta,
+.flag {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+code,
+.mono,
+.label,
+.pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.92em;
+  word-break: break-word;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #050505;
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+pre code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+thead,
+tbody,
+tr {
+  width: 100%;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+th {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+.lead,
+.lede,
+.subtitle,
+.muted,
+.small,
+.mini,
+.footer {
+  color: var(--muted);
+}
+
+.meta {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.grid,
+.cards,
+.two-col {
+  display: grid;
+  gap: 14px;
+}
+
+.grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.meta:has(> div) {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.card,
+.meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.meta > div {
+  padding: 16px;
+}
+
+.flag,
+.result {
+  display: inline-block;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(126, 231, 135, 0.32);
+  background: rgba(126, 231, 135, 0.08);
+  color: #d3f9d8;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.note,
+.callout,
+.good,
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.warn,
+.warning,
+.box.warn {
+  border-left: 3px solid var(--warning);
+}
+
+.quote,
+.diagram,
+.toc {
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+
+.eyebrow,
+.diagram-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  main,
+  .page,
+  .wrap {
+    width: min(var(--content-width), calc(100vw - 20px));
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .card,
+  .meta > div {
+    padding: 16px;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .sheet,
+  .body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.6;
+  }
+
+  main,
+  .page,
+  .wrap,
+  .sheet {
+    width: calc(100vw - 16px);
+  }
+
+  header,
+  section,
+  .hero,
+  .toc,
+  .box,
+  .callout,
+  .note,
+  .warn,
+  .good,
+  .diagram,
+  .quote,
+  .result {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .grid,
+  .cards,
+  .two-col,
+  .meta:has(> div) {
+    grid-template-columns: 1fr;
+  }
+
+  pre,
+  table {
+    font-size: 0.92rem;
+  }
+
+  .sheet,
+  .body {
+    padding: 16px;
+  }
+}
+  </style>
+
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>UiTHack26 Breakout Reversing Writeup</h1>
+      <p class="lead">
+        A full, verbose writeup for the <code>breakout</code> challenge. This covers the initial binary triage,
+        the hint hidden in the visible game levels, the discovery of the alternate level loader, the reconstruction
+        of the secret bitmap board, the correction of a misleading OCR guess, and the final flag extraction.
+      </p>
+      <div class="meta">
+        <div class="card">
+          <strong>Challenge Type</strong>
+          Reversing / game binary analysis
+        </div>
+        <div class="card">
+          <strong>Main Target</strong>
+          <code>/home/userhonest/uithack26/breakout/breakout/breakout.exe</code>
+        </div>
+        <div class="card">
+          <strong>Final Flag</strong>
+          <span class="flag">UiTHack26{pr0_64m3r_0r_3l173_h4ck3r?}</span>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>1. Challenge Statement and Initial Idea</h2>
+      <p>
+        The prompt was essentially: <em>Can you break out of this? follow the hint and find the flag</em>. That wording
+        strongly suggests that the visible game itself is not the real endpoint. Instead, the game likely contains some
+        secondary path, hidden asset, or alternate code path that needs to be reached by analysis rather than by normal play.
+      </p>
+      <p>
+        The title <code>breakout</code> also hints at two separate meanings:
+      </p>
+      <ul>
+        <li><strong>Literal meaning:</strong> it is a Breakout-style game.</li>
+        <li><strong>Reversing meaning:</strong> we may need to “break out” of the normal game flow.</li>
+      </ul>
+      <p>
+        That immediately made the plan fairly clear:
+      </p>
+      <ol>
+        <li>Identify the binary format and protections.</li>
+        <li>Inspect how the game stores levels.</li>
+        <li>Look for any hidden level handling or out-of-range behavior.</li>
+        <li>Reconstruct anything unusual from static data if dynamic execution is unnecessary.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>2. Binary Triage</h2>
+      <p>
+        The challenge directory contains a Windows game executable and SDL dependencies. The relevant file is:
+        <code>breakout.exe</code>.
+      </p>
+      <pre><code>Directory snapshot
+
+/home/userhonest/uithack26/breakout/breakout/
+├── breakout.exe
+├── SDL2.dll
+├── SDL2_image.dll
+├── libwinpthread-1.dll
+└── assets/</code></pre>
+      <p>
+        The binary is a 64-bit PE executable. For this challenge, the important part was not wrestling with anti-debug
+        tricks or packers, but understanding the game logic and data layout. The executable contains enough static material
+        to recover the hidden content directly.
+      </p>
+      <div class="note">
+        The fastest path here is static reversing. You do not need to beat the game manually, patch the process in memory,
+        or brute-force any cryptography.
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Following the Hint in the Visible Levels</h2>
+      <p>
+        The prompt explicitly says to follow the hint. In a Breakout game, the most obvious place for a hint is the brick
+        layout itself. So the next step was to inspect how levels are stored.
+      </p>
+      <p>
+        The normal level loader uses a static table of level maps in the executable’s data section. Each level entry consists
+        of an 8-byte header followed by a <code>13 x 19</code> tile map of 32-bit values. Dumping those maps reveals that one
+        of the layouts is not decorative noise at all: it spells text.
+      </p>
+      <pre><code class="language-python">from pathlib import Path
+import struct
+
+p = Path('/home/userhonest/uithack26/breakout/breakout/breakout.exe').read_bytes()
+base = 0xd2600
+
+for lvl in range(10):
+    off = base + lvl * 0x3e4
+    hdr = struct.unpack_from('&lt;II', p, off)
+    vals = struct.unpack_from('&lt;' + 'I' * (13 * 19), p, off + 8)
+    print('LEVEL', lvl, 'hdr', hdr)
+    for r in range(13):
+        row = vals[r * 19:(r + 1) * 19]
+        print(''.join('█' if x else ' ' for x in row))
+    print()</code></pre>
+      <p>
+        The important discovery is that the visible layout spells <strong>BREAK</strong> and <strong>OUT</strong>. That is
+        not the flag. It is a hint telling us what to do conceptually: move past the normal game boundaries.
+      </p>
+      <p>
+        This is the point where a lot of solvers can waste time trying to “play better.” But the binary itself is suggesting
+        that the real content lies outside the standard visible levels.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. Finding the Alternate Level Path</h2>
+      <p>
+        Once the normal level handling is understood, the next question is simple: what happens when the level index goes out
+        of range?
+      </p>
+      <p>
+        The normal loader handles levels <code>0..9</code>. That already suggests a branch somewhere that decides:
+        use regular table lookup if the level number is valid, otherwise do something else. This “something else” turned out to
+        be the entire challenge.
+      </p>
+      <p>
+        In the disassembly, the regular level loading path eventually branches to a different function when the level number
+        exceeds the normal range. Instead of pulling a <code>13 x 19</code> board from the standard level array, it synthesizes
+        a new board from a compact bitmask-like table stored in <code>.rdata</code>.
+      </p>
+      <table>
+        <tr>
+          <th>Component</th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td>Normal levels</td>
+          <td>Stored directly in the data section as explicit tile maps.</td>
+        </tr>
+        <tr>
+          <td>Out-of-range level path</td>
+          <td>Generates a board procedurally from an encoded table.</td>
+        </tr>
+        <tr>
+          <td>Encoded source table</td>
+          <td>Begins at <code>.rdata</code> RVA <code>0x1400da0c0</code>.</td>
+        </tr>
+        <tr>
+          <td>Hidden board dimensions</td>
+          <td><code>222 x 7</code></td>
+        </tr>
+      </table>
+      <p>
+        That board size is a giant clue. A <code>222 x 7</code> bitmap is not a normal Breakout level. It is exactly the sort of
+        dimensions you would expect for horizontally encoded 5x7 or 7-pixel-tall text.
+      </p>
+    </section>
+
+    <section>
+      <h2>5. Extracting the Hidden Encoded Data</h2>
+      <p>
+        The hidden board is generated from bytes in <code>.rdata</code>. To inspect that table directly, we can convert the RVA
+        into a file offset using the PE section layout. In this case, the raw file offset is:
+      </p>
+      <pre><code>raw_offset = 0xd8000 + (0x1400da0c0 - 0x1400da000)</code></pre>
+      <p>
+        Then the raw bytes can be dumped very simply:
+      </p>
+      <pre><code class="language-python">from pathlib import Path
+
+p = Path('/home/userhonest/uithack26/breakout/breakout/breakout.exe').read_bytes()
+off = 0xd8000 + (0x1400da0c0 - 0x1400da000)
+print(p[off:off + 256].hex())</code></pre>
+      <p>
+        Dumping those bytes by itself does not reveal readable ASCII. That is expected. The board is not stored as plain text.
+        It is reconstructed bit by bit by the alternate loader.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. Reconstructing the Hidden Board</h2>
+      <p>
+        The hidden loader computes a bitmap by iterating through rows and columns and deriving each cell from an encoded byte
+        stream. The important recovered logic is:
+      </p>
+      <pre><code class="language-python">rows, cols = 222, 7
+
+for row in range(rows):
+    idx = row
+    for col in range(cols):
+        a = idx &gt;&gt; 3
+        val = ((0x5a + 13 * a) &amp; 0xff) ^ table[a]
+        bit = (val &gt;&gt; (idx &amp; 7)) &amp; 1
+        idx += 0xde   # 0xde == 222</code></pre>
+      <p>
+        There are several things happening here:
+      </p>
+      <ul>
+        <li>The board is conceptually indexed linearly.</li>
+        <li><code>a = idx &gt;&gt; 3</code> selects which encoded byte contains the relevant bit.</li>
+        <li><code>((0x5a + 13 * a) &amp; 0xff)</code> is a position-dependent mask.</li>
+        <li>The byte from the table is XORed with that mask.</li>
+        <li>The specific bit inside the resulting byte is then extracted with <code>(idx &amp; 7)</code>.</li>
+      </ul>
+      <p>
+        So this is not encryption in any serious sense. It is just an obfuscated bitmap encoding.
+      </p>
+      <h3>Full Reconstruction Script</h3>
+      <p>
+        The following script reconstructs the hidden board from the executable, rotates it into human-readable orientation,
+        and prints an ASCII preview. This is the essential solve logic.
+      </p>
+      <pre><code class="language-python">from pathlib import Path
+
+exe = Path('/home/userhonest/uithack26/breakout/breakout/breakout.exe').read_bytes()
+
+# Hidden data table in .rdata
+table_off = 0xd8000 + (0x1400da0c0 - 0x1400da000)
+table = exe[table_off:table_off + 256]
+
+rows, cols = 222, 7
+
+# Reconstruct hidden board as generated by the alternate level loader
+mat = [[0] * cols for _ in range(rows)]
+
+for row in range(rows):
+    idx = row
+    for col in range(cols):
+        a = idx >> 3
+        val = ((0x5a + 13 * a) & 0xff) ^ table[a]
+        bit = (val >> (idx & 7)) & 1
+        mat[row][col] = bit
+        idx += 0xde
+
+# Rotate to read as text: 7 rows high, 222 columns wide
+rot = [[mat[c][x] for c in range(rows)] for x in range(7)]
+
+for y in range(7):
+    print(''.join('#' if bit else '.' for bit in rot[y]))</code></pre>
+      <p>
+        Once rotated, the output is clearly a text banner rather than a game board. The bitmap is effectively a custom 5x7-ish
+        font rendered horizontally across a very wide strip.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Why the First Flag Guess Was Wrong</h2>
+      <p>
+        When a bitmap banner like this is viewed quickly, it is tempting to read it with approximate OCR or visual guessing.
+        The first rough reading looked like:
+      </p>
+      <pre><code>UiTHack26{pr0_g4m3r_0r_3l173_h4ck3r?}</code></pre>
+      <p>
+        The user correctly pointed out that this was wrong. That meant at least one glyph had been misread.
+      </p>
+      <p>
+        The correct fix was to stop guessing from the whole banner and instead segment it into individual glyphs, then compare
+        the 5x7 bitmaps directly.
+      </p>
+      <h3>Per-Glyph Inspection</h3>
+      <p>
+        After splitting the rotated banner on blank columns, each character could be examined separately. The critical ambiguous
+        glyph was the one previously read as lowercase <code>g</code>. Its bitmap was:
+      </p>
+      <pre><code>.###.
+#....
+####.
+#...#
+#...#
+#...#
+.###.</code></pre>
+      <p>
+        This looked superficially like a rounded letter, but comparing it against already-known digits in the same font showed
+        that it matched the challenge’s <code>6</code> glyph, not <code>g</code>.
+      </p>
+      <p>
+        That changed the string fragment from:
+      </p>
+      <pre><code>g4m3r</code></pre>
+      <p>
+        to:
+      </p>
+      <pre><code>64m3r</code></pre>
+      <p>
+        Which gives the corrected and final flag:
+      </p>
+      <p><span class="flag">UiTHack26{pr0_64m3r_0r_3l173_h4ck3r?}</span></p>
+    </section>
+
+    <section>
+      <h2>8. Full Solve Script With Decoding and Banner Segmentation</h2>
+      <p>
+        Below is a more complete version of the solve script. It reconstructs the hidden board, rotates it, segments the text
+        by blank columns, and prints a simple textual view of each character. This is the kind of script you can keep as a
+        reproducible solution rather than relying on manual reading.
+      </p>
+      <pre><code class="language-python">from pathlib import Path
+
+EXE_PATH = '/home/userhonest/uithack26/breakout/breakout/breakout.exe'
+
+def load_hidden_table():
+    data = Path(EXE_PATH).read_bytes()
+    off = 0xd8000 + (0x1400da0c0 - 0x1400da000)
+    return data[off:off + 256]
+
+def reconstruct_hidden_board(table):
+    rows, cols = 222, 7
+    mat = [[0] * cols for _ in range(rows)]
+    for row in range(rows):
+        idx = row
+        for col in range(cols):
+            a = idx >> 3
+            val = ((0x5a + 13 * a) & 0xff) ^ table[a]
+            bit = (val >> (idx & 7)) & 1
+            mat[row][col] = bit
+            idx += 0xde
+    return mat
+
+def rotate_board(mat):
+    rows = len(mat)
+    cols = len(mat[0])
+    return [[mat[c][x] for c in range(rows)] for x in range(cols)]
+
+def column_is_blank(rot, x):
+    return all(rot[y][x] == 0 for y in range(len(rot)))
+
+def segment_glyphs(rot):
+    width = len(rot[0])
+    glyphs = []
+    x = 0
+    while x &lt; width:
+        while x &lt; width and column_is_blank(rot, x):
+            x += 1
+        if x &gt;= width:
+            break
+        start = x
+        while x &lt; width and not column_is_blank(rot, x):
+            x += 1
+        end = x
+        glyph = []
+        for y in range(len(rot)):
+            glyph.append(rot[y][start:end])
+        glyphs.append(glyph)
+    return glyphs
+
+def render_glyph(g):
+    return '\n'.join(''.join('#' if cell else '.' for cell in row) for row in g)
+
+def main():
+    table = load_hidden_table()
+    mat = reconstruct_hidden_board(table)
+    rot = rotate_board(mat)
+
+    print('Hidden banner:')
+    for row in rot:
+        print(''.join('#' if bit else '.' for bit in row))
+
+    print()
+    print('Segmented glyphs:')
+    for i, glyph in enumerate(segment_glyphs(rot)):
+        print(f'glyph {i}')
+        print(render_glyph(glyph))
+        print()
+
+if __name__ == '__main__':
+    main()</code></pre>
+      <p>
+        If you run a script like this and compare repeated glyphs, the corrected reading becomes much more robust than a
+        one-pass visual guess.
+      </p>
+    </section>
+
+    <section>
+      <h2>9. Challenge Logic Summary</h2>
+      <p>
+        The core idea of the challenge is elegant:
+      </p>
+      <ol>
+        <li>The visible game provides a hint through its brick layout: <code>BREAK OUT</code>.</li>
+        <li>Normal gameplay content lives in a straightforward level table.</li>
+        <li>The real secret is not in those visible levels, but in the alternate loader for out-of-range level indices.</li>
+        <li>That loader reconstructs a wide hidden bitmap from obfuscated bytes.</li>
+        <li>The bitmap, when rotated and read correctly, contains the flag.</li>
+      </ol>
+      <p>
+        This is a nice reversing challenge because it rewards reading the binary’s real control flow instead of obsessing over
+        superficial gameplay. The “follow the hint” instruction is literal and fair: the game says <code>BREAK OUT</code>, and
+        the solve is to break out of the normal level system.
+      </p>
+    </section>
+
+    <section>
+      <h2>10. Final Answer</h2>
+      <p>
+        The correct flag is:
+      </p>
+      <p><span class="flag">UiTHack26{pr0_64m3r_0r_3l173_h4ck3r?}</span></p>
+      <p class="small">
+        The earlier incorrect version came from misreading one glyph in the hidden banner. The correct character is
+        <code>6</code>, giving <code>64m3r</code> instead of <code>g4m3r</code>.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
