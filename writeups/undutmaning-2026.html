@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Undutmaning-2026</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #050505;
+      --fg: #f5f5f5;
+      --muted: rgba(255,255,255,0.58);
+      --soft: rgba(255,255,255,0.08);
+      --line: rgba(255,255,255,0.07);
+      --glow: rgba(255,255,255,0.12);
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-y: auto;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,255,255,0.07), transparent 18%),
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.03), transparent 24%),
+        radial-gradient(circle at 80% 75%, rgba(255,255,255,0.025), transparent 24%),
+        linear-gradient(180deg, #020202 0%, #090909 100%);
+      color: var(--fg);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      position: relative;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 88%);
+      opacity: 0.52;
+    }
+
+    body::after {
+      background:
+        linear-gradient(115deg, transparent 0 42%, rgba(255,255,255,0.035) 50%, transparent 58%),
+        linear-gradient(295deg, transparent 0 45%, rgba(255,255,255,0.02) 50%, transparent 55%);
+      filter: blur(12px);
+      opacity: 0.8;
+    }
+
+    .noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      background-image:
+        radial-gradient(circle at 20% 20%, white 0.7px, transparent 1px),
+        radial-gradient(circle at 80% 30%, white 0.7px, transparent 1px),
+        radial-gradient(circle at 40% 70%, white 0.7px, transparent 1px),
+        radial-gradient(circle at 70% 80%, white 0.7px, transparent 1px);
+      background-size: 120px 120px;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .frame {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 120px 32px 32px;
+    }
+
+    .panel {
+      position: relative;
+      width: min(1100px, 94vw);
+      min-height: 74vh;
+      border: 1px solid var(--soft);
+      border-radius: 24px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012));
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.02) inset,
+        0 30px 80px rgba(0,0,0,0.55),
+        0 0 120px rgba(255,255,255,0.035);
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 24%, var(--glow), transparent 28%),
+        linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+      pointer-events: none;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      border-bottom: 1px solid var(--soft);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(0,0,0,0.14);
+      z-index: 5;
+    }
+
+    .content {
+      position: relative;
+      min-height: 74vh;
+      padding: 92px 42px 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .content::before,
+    .content::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 999px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .content::before {
+      width: min(720px, 76vw);
+      height: min(720px, 76vw);
+      opacity: 0.14;
+    }
+
+    .content::after {
+      width: min(480px, 52vw);
+      height: min(480px, 52vw);
+      opacity: 0.08;
+    }
+
+    .hero {
+      position: relative;
+      z-index: 2;
+      width: min(760px, 100%);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: clamp(2.6rem, 6vw, 5.2rem);
+      line-height: 1;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 30px rgba(255,255,255,0.05);
+    }
+
+    .subtitle {
+      margin: 20px auto 0;
+      max-width: 620px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: clamp(0.98rem, 1.6vw, 1.08rem);
+    }
+
+    .event-grid {
+      margin-top: 42px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .event-card {
+      position: relative;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.02);
+      text-align: left;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+    }
+
+    .event-title {
+      font-size: 1.05rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.86);
+      margin-bottom: 18px;
+    }
+
+    .writeup-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .writeup-list a {
+      display: block;
+      text-decoration: none;
+      color: var(--fg);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.02);
+      transition: 180ms ease;
+      text-align: center;
+    }
+
+    .writeup-list a:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.055);
+      border-color: rgba(255,255,255,0.18);
+      box-shadow: 0 10px 30px rgba(255,255,255,0.04);
+    }
+
+    .back-link {
+      margin-top: 22px;
+      display: inline-block;
+      text-decoration: none;
+      color: rgba(255,255,255,0.72);
+      font-size: 0.92rem;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 3px;
+    }
+
+    @media (max-width: 760px) {
+      .frame {
+        padding: 96px 20px 20px;
+      }
+
+      .panel {
+        min-height: 82vh;
+        border-radius: 18px;
+      }
+
+      .content {
+        padding: 88px 20px 28px;
+      }
+
+      .writeup-list {
+        grid-template-columns: 1fr;
+      }
+
+      .event-card {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+
+  <main class="frame">
+    <section class="panel">
+      <div class="topbar">writeups / undutmaning-2026</div>
+
+      <div class="content">
+        <div class="hero">
+          <h1>Undutmaning-2026</h1>
+          <p class="subtitle">
+            Challenge notes and solve paths from the Undutmaning-2026 event.
+          </p>
+
+          <div class="event-grid">
+            <section class="event-card">
+              <div class="event-title">Challenges</div>
+              <div class="writeup-list">
+                <a href="/docs/writeups/crashdump-writeup.html">Crashdump</a>
+                <a href="/docs/writeups/flytvast.html">Flytvåst</a>
+                <a href="/docs/writeups/giff-splitter.html">GIFF Splitter</a>
+                <a href="/docs/writeups/skattkistan.html">Skattkistan</a>
+                <a href="/docs/writeups/vagor-undervattnet.html">Vågor under vattnet</a>
+                <a href="/docs/writeups/pa-botten.html">På botten</a>
+              </div>
+            </section>
+          </div>
+
+          <a class="back-link" href="/docs/writeups.html">Back to writeups</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
